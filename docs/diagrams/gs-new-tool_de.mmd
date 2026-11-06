@@ -1,0 +1,21 @@
+flowchart TD
+    A["1 Aufnahme<br>Repository, Zweck,<br>geplanter Einsatz"] --> B["2 Quarantäne-Klon<br>fester Commit, nie ausgeführt"]
+    B --> C["3 Lieferkette<br>Paket gegen Tag"]
+    C --> D["4 Scanner<br>im Scanner-Image"]
+    D --> E["5 Erst-Audit<br>Claude und Codex,<br>dieselbe Vorgabe"]
+    E --> F["6 Upstream-Recherche<br>bekannte Issues, Fixes"]
+    F --> G["7 Einsatzanalyse<br>privat"]
+    G --> H{"8 Eigentümer entscheidet"}
+    H -- nicht einsetzen --> X["Bericht und Urteil"]
+    H -- so einsetzen --> K["Containertest und<br>Verhaltensprobe<br>nach Freigabe"]
+    H -- Fork härten --> P["Patch-Runden,<br>Abschnitt 8"]
+    P --> K
+    K --> L["Freigabe und<br>Installation"]
+    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
+    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
+    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
+    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
+    class A,B,P,L producer
+    class C,D,E,F,G,K adversary
+    class H human
+    class X artifact

@@ -1,0 +1,17 @@
+flowchart LR
+    I["Installierte Werkzeuge<br>Plugins, MCP-Server,<br>CLI, Pakete"] --> O["Nach Reichweite ordnen<br>Hooks, Schreibzugriff,<br>Netz zuerst"]
+    O --> R["Installierten<br>Tag prüfen"]
+    R --> D{"Eigentümer<br>entscheidet"}
+    D -- behalten --> M["Wartung"]
+    D -- einschränken oder<br>härten --> F["Fork, Patch-Runde,<br>Abschlusstest"]
+    D -- entfernen --> X["Bericht und Urteil"]
+    F --> M
+    M -. Upstream-Update .-> R
+    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
+    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
+    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
+    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
+    class I,O,F,M producer
+    class R adversary
+    class D human
+    class X artifact

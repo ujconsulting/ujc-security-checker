@@ -1,0 +1,16 @@
+flowchart LR
+    A["Intake"] --> Q["Quarantine clone<br>fixed tag, full SHA,<br>no submodules, no LFS"]
+    Q --> S["Structure<br>what actually runs:<br>hooks, entry points, bundles"]
+    S --> C{"Package equals<br>the tag?"}
+    C -- identical except<br>documented --> N["Next step:<br>scanners"]
+    C -- code missing<br>in the tag --> X["Abort:<br>record and verdict"]
+    Q -. no reproducible state .-> X
+    class A,Q,S producer
+    class C adversary
+    class N artifact
+    class X stop
+    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
+    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
+    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
+    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
+    classDef stop fill:#b3261e,stroke:#6e1612,color:#fff

@@ -1,0 +1,30 @@
+flowchart TD
+    A["📥 INTAKE<br>repository, purpose,<br>intended use"] --> Q["🧊 QUARANTINE CLONE<br>fixed tag, full SHA,<br>never executed"]
+    Q --> C["🔗 SUPPLY CHAIN<br>package against tag,<br>bundles against source"]
+    C --> S["🔎 SCANNERS<br>pinned scanner image<br>tools/scan.sh"]
+    S --> U["⚔️ INITIAL AUDIT<br>same brief to a Claude<br>sub-agent and Codex"]
+    U --> W["📚 UPSTREAM RESEARCH<br>+ usage analysis"]
+    W --> D["✍️ DECISION<br>owner, threat model"]
+    D -- do not use --> R["repos/NAME/README.md<br>summary and verdict"]
+    D -- harden a fork --> F["🔨 PATCH ROUND<br>private fork,<br>one commit per round"]
+    F --> T["🔬 FINAL TEST<br>Codex, previous<br>findings first"]
+    T -- NOT APPROVED --> F
+    T -- APPROVED --> G["✍️ Owner approves<br>a sandbox run"]
+    D -- use as it is --> G
+    G --> K["🧪 CONTAINER TEST<br>+ BEHAVIOR PROBE<br>egress network only"]
+    K --> L["🚀 RELEASE<br>private repository,<br>installation"]
+    L --> M["🔁 MAINTENANCE<br>fork watch, re-apply<br>patches + final test"]
+    M -. upstream update .-> F
+    Q -. abort criterion met .-> R
+    U -. findings,<br>on instruction only .-> P["📨 DISCLOSURE DRAFT<br>policy check, leak scan"]
+    P --> H["✍️ Owner approves<br>exactly this text"]
+    U --> R
+    T --> R
+    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
+    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
+    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
+    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
+    class A,Q,F,L,M,P producer
+    class C,S,U,W,T,K adversary
+    class D,G,H human
+    class R artifact

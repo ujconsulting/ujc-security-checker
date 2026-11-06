@@ -1,0 +1,15 @@
+flowchart LR
+    T["Fremdes Werkzeug<br>Plugin, MCP-Server,<br>Paket"] --> SC["ujc-security-checker<br>Prüfung, Sandbox,<br>Urteil"]
+    SC -- nicht einsetzen --> X["Bericht"]
+    SC -- freigegeben oder<br>gehärteter Fork --> P["Eigenes Projekt"]
+    I["Eigene Idee<br>oder Änderung"] --> CL["claudex-loop<br>Plan, Bau,<br>Abnahme"]
+    P --> CL
+    CL --> R["Geprüfte Änderung"]
+    CL -.->|"Wrapper codex_ro.py<br>und /audit"| SC
+    P -. Werkzeug-Update .-> SC
+    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
+    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
+    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
+    class T,P,I producer
+    class SC,CL adversary
+    class X,R artifact

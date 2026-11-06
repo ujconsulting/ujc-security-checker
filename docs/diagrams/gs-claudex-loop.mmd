@@ -1,0 +1,15 @@
+flowchart LR
+    T["Foreign tool<br>plugin, MCP server,<br>package"] --> SC["ujc-security-checker<br>review, sandbox,<br>verdict"]
+    SC -- do not use --> X["Record"]
+    SC -- approved or<br>hardened fork --> P["Own project"]
+    I["Own idea<br>or change"] --> CL["claudex-loop<br>plan, build,<br>acceptance"]
+    P --> CL
+    CL --> R["Reviewed change"]
+    CL -.->|"wrapper codex_ro.py<br>and /audit"| SC
+    P -. tool update .-> SC
+    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
+    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
+    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
+    class T,P,I producer
+    class SC,CL adversary
+    class X,R artifact

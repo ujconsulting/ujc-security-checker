@@ -1,0 +1,13 @@
+flowchart LR
+    P["Patch-Runde<br>ein Commit"] --> T["Abschlusstest<br>Codex, nur lesend,<br>frühere Befunde zuerst"]
+    T -- NOT APPROVED --> P
+    T -- APPROVED --> A["Eigentümer gibt<br>Containerlauf für<br>diese SHA frei"]
+    A --> C["Containertest<br>Fork und Upstream,<br>dieselben Tests"]
+    C --> B["Verhaltensprobe<br>Programme, Verbindungen,<br>Dateien"]
+    B --> R["Freigabe"]
+    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
+    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
+    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
+    class P,R producer
+    class T,C,B adversary
+    class A human

@@ -73,38 +73,7 @@ Complete installation in order, each step with its expected result:
 
 ## The process on one page
 
-```mermaid
-flowchart LR
-    A["📥 INTAKE<br>repository, purpose,<br>intended use"] --> Q["🧊 QUARANTINE CLONE<br>fixed tag, full SHA,<br>never executed"]
-    Q --> C["🔗 SUPPLY CHAIN<br>package against tag,<br>bundles against source"]
-    C --> S["🔎 SCANNERS<br>pinned scanner image<br>tools/scan.sh"]
-    S --> U["⚔️ INITIAL AUDIT<br>same brief to a Claude<br>sub-agent and Codex"]
-    U --> W["📚 UPSTREAM RESEARCH<br>+ usage analysis"]
-    W --> D["✍️ DECISION<br>owner, threat model"]
-    D -- do not use --> R["repos/NAME/README.md<br>summary and verdict"]
-    D -- harden a fork --> F["🔨 PATCH ROUND<br>private fork,<br>one commit per round"]
-    F --> T["🔬 FINAL TEST<br>Codex, previous<br>findings first"]
-    T -- NOT APPROVED --> F
-    T -- APPROVED --> G["✍️ Owner approves<br>a sandbox run"]
-    D -- use as it is --> G
-    G --> K["🧪 CONTAINER TEST<br>+ BEHAVIOR PROBE<br>egress network only"]
-    K --> L["🚀 RELEASE<br>private repository,<br>installation"]
-    L --> M["🔁 MAINTENANCE<br>fork watch, re-apply<br>patches + final test"]
-    M -. upstream update .-> F
-    Q -. abort criterion met .-> R
-    U -. findings,<br>on instruction only .-> P["📨 DISCLOSURE DRAFT<br>policy check, leak scan"]
-    P --> H["✍️ Owner approves<br>exactly this text"]
-    U --> R
-    T --> R
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    class A,Q,F,L,M,P producer
-    class C,S,U,W,T,K adversary
-    class D,G,H human
-    class R artifact
-```
+![Flow diagram: The process on one page](docs/diagrams/process.svg)
 
 **You come in at three places:** the decision after the audit (do not use / use as it is /
 harden a fork), the approval before anything from the reviewed repository runs in a container,
@@ -152,43 +121,14 @@ are the same: orange acts, green checks, yellow is a human decision, grey is the
 The tool is cloned on a fixed tag and never executed. What users really install is the published
 package, so it is compared with the tag, and bundles are compared with the source.
 
-```mermaid
-flowchart LR
-    A["Intake"] --> Q["Quarantine clone<br>fixed tag, full SHA,<br>no submodules, no LFS"]
-    Q --> S["Structure<br>what actually runs:<br>hooks, entry points, bundles"]
-    S --> C{"Package equals<br>the tag?"}
-    C -- identical except<br>documented --> N["Next step:<br>scanners"]
-    C -- code missing<br>in the tag --> X["Abort:<br>record and verdict"]
-    Q -. no reproducible state .-> X
-    class A,Q,S producer
-    class C adversary
-    class N artifact
-    class X stop
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    classDef stop fill:#b3261e,stroke:#6e1612,color:#fff
-```
+![Flow diagram: Quarantine clone and supply chain](docs/diagrams/quarantine.svg)
 
 ### Scanners
 
 All static scanners run in the pinned scanner image: first offline, then only for the database
 downloads through the egress proxy (list `scanner`), then the summary (`tools/scan.sh`).
 
-```mermaid
-flowchart LR
-    P1["Phase 1, offline<br>network none<br>secrets, SAST, Actions,<br>Dockerfiles, metrics, SBOM"] --> P2["Phase 2, online<br>internal network, proxy list scanner<br>osv-scanner, trivy, grype<br>database downloads only"]
-    P2 --> P3["Phase 3, summary<br>scan-summary.md<br>without network"]
-    P3 --> R["Short version<br>into the record"]
-    class P1,P2,P3 adversary
-    class R artifact
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    classDef stop fill:#b3261e,stroke:#6e1612,color:#fff
-```
+![Flow diagram: Scanners](docs/diagrams/scanners.svg)
 
 ### Sandbox with egress control
 
@@ -196,129 +136,35 @@ Foreign code runs only after an approval that names the full commit SHA, only in
 network behind the proxy, and without any network after the installation. Every blocked attempt is
 a finding.
 
-```mermaid
-flowchart TD
-    AP{"Approval names<br>the full commit SHA?"} -- no --> STOP["Nothing starts"]
-    AP -- yes --> S["setup.sh<br>network and proxy"]
-    S --> K{"check.sh<br>passes?"}
-    K -- no --> STOP
-    K -- yes --> I["Install phase<br>internal network,<br>exit only via proxy"]
-    I --> D["Disconnect network<br>and verify it"]
-    D --> R["Tests or probe<br>offline"]
-    R --> L["Proxy log<br>into the results"]
-    L --> F{"Blocked<br>attempts?"}
-    F -- yes --> FD["Finding"]
-    F -- no --> OK["Result"]
-    class AP human
-    class S,K,I,D,R,L,F adversary
-    class FD,OK artifact
-    class STOP stop
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    classDef stop fill:#b3261e,stroke:#6e1612,color:#fff
-```
+![Flow diagram: Sandbox with egress control](docs/diagrams/sandbox.svg)
 
 ### Hardened fork
 
 A private fork is patched in rounds, each round is checked by a reviewer who did not write it, and
 every upstream update starts the cycle again. The fork itself stays private.
 
-```mermaid
-flowchart LR
-    P["Patch round<br>one commit"] --> T["Final test<br>Codex, read-only"]
-    T -- NOT APPROVED --> P
-    T -- APPROVED --> A["Owner approves<br>a container run"]
-    A --> C["Container test<br>fork against upstream"]
-    C --> B["Behavior probe"]
-    B --> R["Release"]
-    R --> M["Maintenance"]
-    M -. upstream update .-> P
-    class P,R,M producer
-    class T,C,B adversary
-    class A human
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    classDef stop fill:#b3261e,stroke:#6e1612,color:#fff
-```
+![Flow diagram: Hardened fork](docs/diagrams/fork.svg)
 
 ### Disclosure
 
 A finding goes upstream only through a fixed chain, with a hash-bound, one-time approval of exactly
 that text.
 
-```mermaid
-flowchart TD
-    A["1 Classify<br>critical or not"] --> B["2 Channel and<br>policy check"]
-    B --> C["3 Current state,<br>duplicates"]
-    C --> D["4 Draft"]
-    D --> E["5 Finding validation and<br>exposure pass, optional"]
-    E --> F["6 Leak scan"]
-    F --> G["7 Codex cross-check,<br>optional"]
-    G --> H{"8 Owner approves<br>exactly this text,<br>hash-bound"}
-    H --> I["9 Dry run"]
-    I --> J["10 Submit"]
-    J --> K["11 Register"]
-    K --> L["12 Watch,<br>read-only"]
-    L --> M["13 Publish,<br>lift embargo"]
-    class A,D,J,K producer
-    class B,C,E,F,G,I,L adversary
-    class H human
-    class M artifact
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    classDef stop fill:#b3261e,stroke:#6e1612,color:#fff
-```
+![Flow diagram: Disclosure](docs/diagrams/disclosure.svg)
 
 ### Watch of reports, inbox and own repository
 
 The watch is read-only. Comments are claims: "fixed" is set in the register only after a human has
 read the merged code.
 
-```mermaid
-flowchart LR
-    W["Watch<br>disclosures, inbox,<br>own repository"] --> C["Comments, PRs,<br>advisories, mailbox,<br>new upstream issues"]
-    C --> V{"Claim: fixed?"}
-    V -- yes --> H["Human reads<br>the merged code"]
-    H --> Z["Register: fixed"]
-    V -- no --> N["Report to the owner"]
-    class W,C adversary
-    class V,H human
-    class Z,N artifact
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    classDef stop fill:#b3261e,stroke:#6e1612,color:#fff
-```
+![Flow diagram: Watch of reports, inbox and own repository](docs/diagrams/watch.svg)
 
 ### Public/private gate
 
 Before every commit and push, `tools/public_check.py` keeps internal details, AI attribution,
 German text outside `*_de.md` and embargoed findings out of the public repository.
 
-```mermaid
-flowchart LR
-    G["Commit or push"] --> H[".githooks<br>pre-commit, pre-push"]
-    H --> P["public_check.py<br>internal, ai, german,<br>pairing, embargo<br>--history before a push"]
-    P --> Q{"Findings?"}
-    Q -- none --> OK["Exit 0:<br>it goes through"]
-    Q -- any --> B["Blocked"]
-    class G producer
-    class H,P,Q adversary
-    class OK artifact
-    class B stop
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    classDef stop fill:#b3261e,stroke:#6e1612,color:#fff
-```
+![Flow diagram: Public/private gate](docs/diagrams/gate.svg)
 
 ## Safety rules
 
@@ -378,7 +224,8 @@ upstream tool only; if a tool is adopted as an own version, everything about it 
 README.md, README_de.md                project overview (English, German)
 LICENSE, SECURITY.md                   MIT license, how to report a vulnerability
 CLAUDE.md, AGENTS.md                   rules for Claude Code, Codex reviewer role
-docs/                                  SETUP.md (installation), SKILLS.md (skill overview), GETTING-STARTED.md (beginner guide), each with _de.md
+docs/                                  SETUP.md (installation), SKILLS.md (skill overview), GETTING-STARTED.md (beginner guide), each with _de.md;
+                                       diagrams/ (flow diagrams: Mermaid source and rendered SVG)
 .claude/skills/<name>/                 SKILL.md (for the agents), README.md / README_de.md (for humans)
 .agents/skills/                        Codex mirror of the skills (generated)
 .githooks/                             pre-commit / pre-push: public/private gate

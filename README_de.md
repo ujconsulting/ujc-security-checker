@@ -1,4 +1,4 @@
-<!-- source: README.md sha256:c782b5dd00f292d5aea07b790b2c61313300fa76130e06d0afd8fe9d624ba995 -->
+<!-- source: README.md sha256:ed084102c6f58b38ef8ac1e4c93f5226c6fc08a6b26ff4d675b8ecc47347143f -->
 [English](README.md) | [Deutsch](README_de.md)
 
 # ujc-security-checker
@@ -74,38 +74,7 @@ Vollständige Installation in der richtigen Reihenfolge, jeder Schritt mit erwar
 
 ## Der Ablauf auf einer Seite
 
-```mermaid
-flowchart LR
-    A["📥 INTAKE<br>repository, purpose,<br>intended use"] --> Q["🧊 QUARANTINE CLONE<br>fixed tag, full SHA,<br>never executed"]
-    Q --> C["🔗 SUPPLY CHAIN<br>package against tag,<br>bundles against source"]
-    C --> S["🔎 SCANNERS<br>pinned scanner image<br>tools/scan.sh"]
-    S --> U["⚔️ INITIAL AUDIT<br>same brief to a Claude<br>sub-agent and Codex"]
-    U --> W["📚 UPSTREAM RESEARCH<br>+ usage analysis"]
-    W --> D["✍️ DECISION<br>owner, threat model"]
-    D -- do not use --> R["repos/NAME/README.md<br>summary and verdict"]
-    D -- harden a fork --> F["🔨 PATCH ROUND<br>private fork,<br>one commit per round"]
-    F --> T["🔬 FINAL TEST<br>Codex, previous<br>findings first"]
-    T -- NOT APPROVED --> F
-    T -- APPROVED --> G["✍️ Owner approves<br>a sandbox run"]
-    D -- use as it is --> G
-    G --> K["🧪 CONTAINER TEST<br>+ BEHAVIOR PROBE<br>egress network only"]
-    K --> L["🚀 RELEASE<br>private repository,<br>installation"]
-    L --> M["🔁 MAINTENANCE<br>fork watch, re-apply<br>patches + final test"]
-    M -. upstream update .-> F
-    Q -. abort criterion met .-> R
-    U -. findings,<br>on instruction only .-> P["📨 DISCLOSURE DRAFT<br>policy check, leak scan"]
-    P --> H["✍️ Owner approves<br>exactly this text"]
-    U --> R
-    T --> R
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    class A,Q,F,L,M,P producer
-    class C,S,U,W,T,K adversary
-    class D,G,H human
-    class R artifact
-```
+![Ablaufdiagramm: Der Ablauf auf einer Seite](docs/diagrams/process.svg)
 
 *(Die Grafik bleibt bewusst englisch — sie ist mit der englischen Fassung identisch, damit beim Ändern nicht eine von beiden zurückbleibt.)*
 
@@ -159,24 +128,7 @@ Das Werkzeug wird auf einem festen Tag geklont und nie ausgeführt. Was Anwender
 installieren, ist das veröffentlichte Paket; deshalb wird es mit dem Tag verglichen, Bundles mit dem
 Quellcode.
 
-```mermaid
-flowchart LR
-    A["Intake"] --> Q["Quarantine clone<br>fixed tag, full SHA,<br>no submodules, no LFS"]
-    Q --> S["Structure<br>what actually runs:<br>hooks, entry points, bundles"]
-    S --> C{"Package equals<br>the tag?"}
-    C -- identical except<br>documented --> N["Next step:<br>scanners"]
-    C -- code missing<br>in the tag --> X["Abort:<br>record and verdict"]
-    Q -. no reproducible state .-> X
-    class A,Q,S producer
-    class C adversary
-    class N artifact
-    class X stop
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    classDef stop fill:#b3261e,stroke:#6e1612,color:#fff
-```
+![Ablaufdiagramm: Quarantäne-Klon und Lieferkette](docs/diagrams/quarantine.svg)
 
 ### Scanner
 
@@ -184,19 +136,7 @@ Alle statischen Scanner laufen im fixierten Scanner-Image: zuerst offline, dann 
 Datenbank-Downloads über den Egress-Proxy (Liste `scanner`), danach die Zusammenfassung
 (`tools/scan.sh`).
 
-```mermaid
-flowchart LR
-    P1["Phase 1, offline<br>network none<br>secrets, SAST, Actions,<br>Dockerfiles, metrics, SBOM"] --> P2["Phase 2, online<br>internal network, proxy list scanner<br>osv-scanner, trivy, grype<br>database downloads only"]
-    P2 --> P3["Phase 3, summary<br>scan-summary.md<br>without network"]
-    P3 --> R["Short version<br>into the record"]
-    class P1,P2,P3 adversary
-    class R artifact
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    classDef stop fill:#b3261e,stroke:#6e1612,color:#fff
-```
+![Ablaufdiagramm: Scanner](docs/diagrams/scanners.svg)
 
 ### Sandbox mit Egress-Kontrolle
 
@@ -204,106 +144,28 @@ Fremder Code läuft nur nach einer Freigabe, die die vollständige Commit-SHA ne
 Netz hinter dem Proxy und nach der Installation ganz ohne Netz. Jeder blockierte Versuch ist ein
 Befund.
 
-```mermaid
-flowchart TD
-    AP{"Approval names<br>the full commit SHA?"} -- no --> STOP["Nothing starts"]
-    AP -- yes --> S["setup.sh<br>network and proxy"]
-    S --> K{"check.sh<br>passes?"}
-    K -- no --> STOP
-    K -- yes --> I["Install phase<br>internal network,<br>exit only via proxy"]
-    I --> D["Disconnect network<br>and verify it"]
-    D --> R["Tests or probe<br>offline"]
-    R --> L["Proxy log<br>into the results"]
-    L --> F{"Blocked<br>attempts?"}
-    F -- yes --> FD["Finding"]
-    F -- no --> OK["Result"]
-    class AP human
-    class S,K,I,D,R,L,F adversary
-    class FD,OK artifact
-    class STOP stop
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    classDef stop fill:#b3261e,stroke:#6e1612,color:#fff
-```
+![Ablaufdiagramm: Sandbox mit Egress-Kontrolle](docs/diagrams/sandbox.svg)
 
 ### Gehärteter Fork
 
 Ein privater Fork wird in Runden gepatcht, jede Runde prüft jemand, der sie nicht geschrieben hat,
 und jedes Upstream-Update startet den Kreislauf neu. Der Fork selbst bleibt privat.
 
-```mermaid
-flowchart LR
-    P["Patch round<br>one commit"] --> T["Final test<br>Codex, read-only"]
-    T -- NOT APPROVED --> P
-    T -- APPROVED --> A["Owner approves<br>a container run"]
-    A --> C["Container test<br>fork against upstream"]
-    C --> B["Behavior probe"]
-    B --> R["Release"]
-    R --> M["Maintenance"]
-    M -. upstream update .-> P
-    class P,R,M producer
-    class T,C,B adversary
-    class A human
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    classDef stop fill:#b3261e,stroke:#6e1612,color:#fff
-```
+![Ablaufdiagramm: Gehärteter Fork](docs/diagrams/fork.svg)
 
 ### Meldung an Upstream
 
 Ein Befund geht nur über eine feste Kette an Upstream, mit einer per Hash gebundenen
 Einmal-Freigabe für genau diesen Text.
 
-```mermaid
-flowchart TD
-    A["1 Classify<br>critical or not"] --> B["2 Channel and<br>policy check"]
-    B --> C["3 Current state,<br>duplicates"]
-    C --> D["4 Draft"]
-    D --> E["5 Finding validation and<br>exposure pass, optional"]
-    E --> F["6 Leak scan"]
-    F --> G["7 Codex cross-check,<br>optional"]
-    G --> H{"8 Owner approves<br>exactly this text,<br>hash-bound"}
-    H --> I["9 Dry run"]
-    I --> J["10 Submit"]
-    J --> K["11 Register"]
-    K --> L["12 Watch,<br>read-only"]
-    L --> M["13 Publish,<br>lift embargo"]
-    class A,D,J,K producer
-    class B,C,E,F,G,I,L adversary
-    class H human
-    class M artifact
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    classDef stop fill:#b3261e,stroke:#6e1612,color:#fff
-```
+![Ablaufdiagramm: Meldung an Upstream](docs/diagrams/disclosure.svg)
 
 ### Überwachung von Meldungen, Eingang und eigenem Repository
 
 Die Überwachung liest nur. Kommentare sind Behauptungen: „fixed“ wird im Register erst gesetzt,
 nachdem ein Mensch den gemergten Code gelesen hat.
 
-```mermaid
-flowchart LR
-    W["Watch<br>disclosures, inbox,<br>own repository"] --> C["Comments, PRs,<br>advisories, mailbox,<br>new upstream issues"]
-    C --> V{"Claim: fixed?"}
-    V -- yes --> H["Human reads<br>the merged code"]
-    H --> Z["Register: fixed"]
-    V -- no --> N["Report to the owner"]
-    class W,C adversary
-    class V,H human
-    class Z,N artifact
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    classDef stop fill:#b3261e,stroke:#6e1612,color:#fff
-```
+![Ablaufdiagramm: Überwachung von Meldungen, Eingang und eigenem Repository](docs/diagrams/watch.svg)
 
 ### Prüfung auf öffentlich/privat
 
@@ -311,23 +173,7 @@ Vor jedem Commit und Push hält `tools/public_check.py` interne Angaben, KI-Herk
 deutschen Text außerhalb von `*_de.md` und Befunde unter Embargo aus dem öffentlichen Repository
 heraus.
 
-```mermaid
-flowchart LR
-    G["Commit or push"] --> H[".githooks<br>pre-commit, pre-push"]
-    H --> P["public_check.py<br>internal, ai, german,<br>pairing, embargo<br>--history before a push"]
-    P --> Q{"Findings?"}
-    Q -- none --> OK["Exit 0:<br>it goes through"]
-    Q -- any --> B["Blocked"]
-    class G producer
-    class H,P,Q adversary
-    class OK artifact
-    class B stop
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    classDef stop fill:#b3261e,stroke:#6e1612,color:#fff
-```
+![Ablaufdiagramm: Prüfung auf öffentlich/privat](docs/diagrams/gate.svg)
 
 ## Sicherheitsregeln
 
@@ -390,7 +236,8 @@ nur das Upstream-Werkzeug; wird ein Werkzeug als eigene Fassung übernommen, ble
 README.md, README_de.md                Projektübersicht (englisch, deutsch)
 LICENSE, SECURITY.md                   MIT-Lizenz, Melden von Schwachstellen
 CLAUDE.md, AGENTS.md                   Regeln für Claude Code, Codex als Reviewer
-docs/                                  SETUP.md (Installation), SKILLS.md (Skill-Übersicht), GETTING-STARTED.md (Einsteigerleitfaden), je mit _de.md
+docs/                                  SETUP.md (Installation), SKILLS.md (Skill-Übersicht), GETTING-STARTED.md (Einsteigerleitfaden), je mit _de.md;
+                                       diagrams/ (Ablaufdiagramme: Mermaid-Quelle und erzeugtes SVG)
 .claude/skills/<name>/                 SKILL.md (für die Agenten), README.md / README_de.md (für Menschen)
 .agents/skills/                        Codex-Spiegel der Skills (erzeugt)
 .githooks/                             pre-commit / pre-push: Öffentlich/privat-Prüfung

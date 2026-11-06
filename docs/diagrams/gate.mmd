@@ -1,0 +1,15 @@
+flowchart LR
+    G["Commit or push"] --> H[".githooks<br>pre-commit, pre-push"]
+    H --> P["public_check.py<br>internal, ai, german,<br>pairing, embargo<br>--history before a push"]
+    P --> Q{"Findings?"}
+    Q -- none --> OK["Exit 0:<br>it goes through"]
+    Q -- any --> B["Blocked"]
+    class G producer
+    class H,P,Q adversary
+    class OK artifact
+    class B stop
+    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
+    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
+    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
+    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
+    classDef stop fill:#b3261e,stroke:#6e1612,color:#fff

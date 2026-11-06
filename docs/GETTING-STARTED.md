@@ -95,23 +95,7 @@ Three rules carry everything else:
    explicit instruction; a disclosure needs an approval that is bound to the hash of exactly that
    text.
 
-```mermaid
-flowchart LR
-    T["Foreign tool<br>plugin, skill, MCP server,<br>CLI, package"] --> R["READ<br>quarantine clone,<br>scanners, two reviewers"]
-    R --> H{"Owner<br>decides"}
-    H -- do not use --> X["Record with<br>verdict"]
-    H -- approve a<br>container run --> C["RUN ONCE<br>isolated container,<br>everything observed"]
-    C --> U["Use, with<br>known conditions"]
-    R -. findings, on<br>instruction only .-> D["Disclosure<br>to upstream"]
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    class T,U,D producer
-    class R,C adversary
-    class H human
-    class X artifact
-```
+![Flow diagram: 3. The core rule: nothing foreign runs before it is understood](diagrams/gs-core-rule.svg)
 
 **Green is who checks, yellow is where a human decides, grey is the written record.** The colors
 name roles, not products.
@@ -168,29 +152,7 @@ Full list: [`docs/SKILLS.md`](SKILLS.md) and [`tools/README.md`](../tools/README
 
 This is the normal case: somebody wants to use a tool that nobody here has used before.
 
-```mermaid
-flowchart TD
-    A["1 Intake<br>repository, purpose,<br>intended use"] --> B["2 Quarantine clone<br>fixed commit, never run"]
-    B --> C["3 Supply chain<br>package against tag"]
-    C --> D["4 Scanners<br>in the scanner image"]
-    D --> E["5 Initial audit<br>Claude and Codex,<br>same brief"]
-    E --> F["6 Upstream research<br>known issues, fixes"]
-    F --> G["7 Usage analysis<br>private"]
-    G --> H{"8 Owner decides"}
-    H -- do not use --> X["Record and verdict"]
-    H -- use as it is --> K["Container test and<br>behavior probe<br>after approval"]
-    H -- harden a fork --> P["Patch rounds,<br>section 8"]
-    P --> K
-    K --> L["Release and<br>installation"]
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    class A,B,P,L producer
-    class C,D,E,F,G,K adversary
-    class H human
-    class X artifact
-```
+![Flow diagram: 6. A new tool, before its first use](diagrams/gs-new-tool.svg)
 
 1. **Intake.** What is the tool, what should it do for us, where would it run? If that is unclear,
    the review stops here.
@@ -224,25 +186,7 @@ starting point differs:
 - **Decide again.** Keep, restrict (for example, switch off a feature), replace with a hardened
   fork, or remove.
 
-```mermaid
-flowchart LR
-    I["Installed tools<br>plugins, MCP servers,<br>CLI, packages"] --> O["Order by reach<br>hooks, write access,<br>network first"]
-    O --> R["Review the<br>installed tag"]
-    R --> D{"Owner<br>decides"}
-    D -- keep --> M["Maintenance"]
-    D -- restrict or<br>harden --> F["Fork, patch round,<br>final test"]
-    D -- remove --> X["Record and verdict"]
-    F --> M
-    M -. upstream update .-> R
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    class I,O,F,M producer
-    class R adversary
-    class D human
-    class X artifact
-```
+![Flow diagram: 7. Tools that are already in use](diagrams/gs-in-use.svg)
 
 **Maintenance** is part of the procedure: every upstream update is a new
 version that has not been reviewed. A fork watch reports new releases; the patches are applied
@@ -275,21 +219,7 @@ project, never global; pinned dependencies; and tool output is data, never instr
 A patch round is not finished when the code is written. It is finished when someone who did not
 write it has checked it:
 
-```mermaid
-flowchart LR
-    P["Patch round<br>one commit"] --> T["Final test<br>Codex, read-only,<br>previous findings first"]
-    T -- NOT APPROVED --> P
-    T -- APPROVED --> A["Owner approves<br>a container run<br>for this SHA"]
-    A --> C["Container test<br>fork and upstream,<br>same tests"]
-    C --> B["Behavior probe<br>programs, connections,<br>files"]
-    B --> R["Release"]
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
-    class P,R producer
-    class T,C,B adversary
-    class A human
-```
+![Flow diagram: 9. How a fix is checked afterwards](diagrams/gs-fix-check.svg)
 
 1. **Final test.** A fresh Codex session checks the round, starting with the findings of the
    previous round: are they really closed? The answer ends in `FINAL TEST: APPROVED` or
@@ -306,24 +236,7 @@ flowchart LR
 The sandbox is built on one assumption: **the tool under review is hostile until shown
 otherwise.**
 
-```mermaid
-flowchart TD
-    S["setup.sh<br>network and proxy"] --> K{"check.sh<br>all checks pass?"}
-    K -- no --> STOP["No container<br>starts"]
-    K -- yes --> I["Install phase<br>internal network,<br>exit only via proxy"]
-    I --> D["Disconnect network<br>and verify it"]
-    D --> R["Tests or probe<br>without any network"]
-    R --> L["Proxy log<br>into the results"]
-    L --> F{"Blocked<br>attempts?"}
-    F -- yes --> FD["Finding:<br>where did it want to go?"]
-    F -- no --> OK["Result"]
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    classDef stop fill:#b3261e,stroke:#6e1612,color:#fff
-    class S,K,I,D,R,L,F adversary
-    class FD,OK artifact
-    class STOP stop
-```
+![Flow diagram: 10. How it is attacked and tested](diagrams/gs-attack-test.svg)
 
 | Protection | Effect |
 |---|---|
@@ -411,23 +324,7 @@ same doctrine, that whoever made something never checks it, but they check diffe
 
 They work together:
 
-```mermaid
-flowchart LR
-    T["Foreign tool<br>plugin, MCP server,<br>package"] --> SC["ujc-security-checker<br>review, sandbox,<br>verdict"]
-    SC -- do not use --> X["Record"]
-    SC -- approved or<br>hardened fork --> P["Own project"]
-    I["Own idea<br>or change"] --> CL["claudex-loop<br>plan, build,<br>acceptance"]
-    P --> CL
-    CL --> R["Reviewed change"]
-    CL -.->|"wrapper codex_ro.py<br>and /audit"| SC
-    P -. tool update .-> SC
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    class T,P,I producer
-    class SC,CL adversary
-    class X,R artifact
-```
+![Flow diagram: 13. How it fits with claudex-loop](diagrams/gs-claudex-loop.svg)
 
 - A tool that is to become part of a project (dependency, plugin, MCP server) goes through the
   checker first. Only then is it built in, and that change goes through claudex-loop.

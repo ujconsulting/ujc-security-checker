@@ -1,0 +1,14 @@
+flowchart LR
+    W["Watch<br>disclosures, inbox,<br>own repository"] --> C["Comments, PRs,<br>advisories, mailbox,<br>new upstream issues"]
+    C --> V{"Claim: fixed?"}
+    V -- yes --> H["Human reads<br>the merged code"]
+    H --> Z["Register: fixed"]
+    V -- no --> N["Report to the owner"]
+    class W,C adversary
+    class V,H human
+    class Z,N artifact
+    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
+    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
+    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
+    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
+    classDef stop fill:#b3261e,stroke:#6e1612,color:#fff

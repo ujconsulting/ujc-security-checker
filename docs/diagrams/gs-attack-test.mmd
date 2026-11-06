@@ -1,0 +1,16 @@
+flowchart TD
+    S["setup.sh<br>network and proxy"] --> K{"check.sh<br>all checks pass?"}
+    K -- no --> STOP["No container<br>starts"]
+    K -- yes --> I["Install phase<br>internal network,<br>exit only via proxy"]
+    I --> D["Disconnect network<br>and verify it"]
+    D --> R["Tests or probe<br>without any network"]
+    R --> L["Proxy log<br>into the results"]
+    L --> F{"Blocked<br>attempts?"}
+    F -- yes --> FD["Finding:<br>where did it want to go?"]
+    F -- no --> OK["Result"]
+    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
+    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
+    classDef stop fill:#b3261e,stroke:#6e1612,color:#fff
+    class S,K,I,D,R,L,F adversary
+    class FD,OK artifact
+    class STOP stop

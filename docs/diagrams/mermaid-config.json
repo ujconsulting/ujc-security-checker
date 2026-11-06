@@ -1,0 +1,7 @@
+{
+  "securityLevel": "strict",
+  "theme": "default",
+  "htmlLabels": false,
+  "flowchart": {"htmlLabels": false, "useMaxWidth": true, "wrappingWidth": 600},
+  "themeVariables": {"fontFamily": "Segoe UI, Helvetica, Arial, sans-serif"}
+}

@@ -1,0 +1,22 @@
+flowchart TD
+    A["1 Classify<br>critical or not"] --> B["2 Channel and<br>policy check"]
+    B --> C["3 Current state,<br>duplicates"]
+    C --> D["4 Draft"]
+    D --> E["5 Finding validation and<br>exposure pass, optional"]
+    E --> F["6 Leak scan"]
+    F --> G["7 Codex cross-check,<br>optional"]
+    G --> H{"8 Owner approves<br>exactly this text,<br>hash-bound"}
+    H --> I["9 Dry run"]
+    I --> J["10 Submit"]
+    J --> K["11 Register"]
+    K --> L["12 Watch,<br>read-only"]
+    L --> M["13 Publish,<br>lift embargo"]
+    class A,D,J,K producer
+    class B,C,E,F,G,I,L adversary
+    class H human
+    class M artifact
+    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
+    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
+    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
+    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
+    classDef stop fill:#b3261e,stroke:#6e1612,color:#fff

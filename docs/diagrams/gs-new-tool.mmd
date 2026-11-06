@@ -1,0 +1,21 @@
+flowchart TD
+    A["1 Intake<br>repository, purpose,<br>intended use"] --> B["2 Quarantine clone<br>fixed commit, never run"]
+    B --> C["3 Supply chain<br>package against tag"]
+    C --> D["4 Scanners<br>in the scanner image"]
+    D --> E["5 Initial audit<br>Claude and Codex,<br>same brief"]
+    E --> F["6 Upstream research<br>known issues, fixes"]
+    F --> G["7 Usage analysis<br>private"]
+    G --> H{"8 Owner decides"}
+    H -- do not use --> X["Record and verdict"]
+    H -- use as it is --> K["Container test and<br>behavior probe<br>after approval"]
+    H -- harden a fork --> P["Patch rounds,<br>section 8"]
+    P --> K
+    K --> L["Release and<br>installation"]
+    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
+    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
+    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
+    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
+    class A,B,P,L producer
+    class C,D,E,F,G,K adversary
+    class H human
+    class X artifact

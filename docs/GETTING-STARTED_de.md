@@ -1,4 +1,4 @@
-<!-- source: GETTING-STARTED.md sha256:7159108dc36adcfd4f88a22321f95c9992ac586306515dc26c91892417c15cfc -->
+<!-- source: GETTING-STARTED.md sha256:b778b8ab584797d7286095e8e0b441b64b072621d5811a9771fc8c142fcd7655 -->
 <!-- freigabe: Auftraggeber, 02.11.2026 -->
 [English](GETTING-STARTED.md) | [Deutsch](GETTING-STARTED_de.md)
 
@@ -102,23 +102,7 @@ Drei Regeln tragen alles andere:
    keine Mail ohne ausdrückliche Anweisung; eine Meldung braucht eine Freigabe, die an den Hash genau
    dieses Textes gebunden ist.
 
-```mermaid
-flowchart LR
-    T["Fremdes Werkzeug<br>Plugin, Skill, MCP-Server,<br>CLI, Paket"] --> R["LESEN<br>Quarantäne-Klon,<br>Scanner, zwei Prüfer"]
-    R --> H{"Eigentümer<br>entscheidet"}
-    H -- nicht einsetzen --> X["Bericht mit<br>Urteil"]
-    H -- Containerlauf<br>freigeben --> C["EINMAL AUSFÜHREN<br>isolierter Container,<br>alles beobachtet"]
-    C --> U["Einsatz unter<br>bekannten Bedingungen"]
-    R -. Befunde, nur auf<br>Anweisung .-> D["Meldung an<br>Upstream"]
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    class T,U,D producer
-    class R,C adversary
-    class H human
-    class X artifact
-```
+![Ablaufdiagramm: 3. Die Grundregel: nichts Fremdes läuft, bevor es verstanden ist](diagrams/gs-core-rule_de.svg)
 
 **Grün prüft, gelb entscheidet ein Mensch, grau ist der schriftliche Bericht.** Die Farben stehen
 für Rollen, nicht für Produkte.
@@ -175,29 +159,7 @@ Vollständige Liste: [`docs/SKILLS_de.md`](SKILLS_de.md) und [`tools/README_de.m
 
 Das ist der Normalfall: Jemand will ein Werkzeug einsetzen, das hier noch niemand benutzt hat.
 
-```mermaid
-flowchart TD
-    A["1 Aufnahme<br>Repository, Zweck,<br>geplanter Einsatz"] --> B["2 Quarantäne-Klon<br>fester Commit, nie ausgeführt"]
-    B --> C["3 Lieferkette<br>Paket gegen Tag"]
-    C --> D["4 Scanner<br>im Scanner-Image"]
-    D --> E["5 Erst-Audit<br>Claude und Codex,<br>dieselbe Vorgabe"]
-    E --> F["6 Upstream-Recherche<br>bekannte Issues, Fixes"]
-    F --> G["7 Einsatzanalyse<br>privat"]
-    G --> H{"8 Eigentümer entscheidet"}
-    H -- nicht einsetzen --> X["Bericht und Urteil"]
-    H -- so einsetzen --> K["Containertest und<br>Verhaltensprobe<br>nach Freigabe"]
-    H -- Fork härten --> P["Patch-Runden,<br>Abschnitt 8"]
-    P --> K
-    K --> L["Freigabe und<br>Installation"]
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    class A,B,P,L producer
-    class C,D,E,F,G,K adversary
-    class H human
-    class X artifact
-```
+![Ablaufdiagramm: 6. Ein neues Werkzeug, vor dem ersten Einsatz](diagrams/gs-new-tool_de.svg)
 
 1. **Aufnahme.** Was ist das Werkzeug, was soll es für uns leisten, wo würde es laufen? Ist das
    unklar, endet die Prüfung hier.
@@ -235,25 +197,7 @@ dasselbe; nur der Ausgangspunkt ist ein anderer:
 - **Neu entscheiden.** Behalten, einschränken (zum Beispiel eine Funktion abschalten), durch einen
   gehärteten Fork ersetzen oder entfernen.
 
-```mermaid
-flowchart LR
-    I["Installierte Werkzeuge<br>Plugins, MCP-Server,<br>CLI, Pakete"] --> O["Nach Reichweite ordnen<br>Hooks, Schreibzugriff,<br>Netz zuerst"]
-    O --> R["Installierten<br>Tag prüfen"]
-    R --> D{"Eigentümer<br>entscheidet"}
-    D -- behalten --> M["Wartung"]
-    D -- einschränken oder<br>härten --> F["Fork, Patch-Runde,<br>Abschlusstest"]
-    D -- entfernen --> X["Bericht und Urteil"]
-    F --> M
-    M -. Upstream-Update .-> R
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    class I,O,F,M producer
-    class R adversary
-    class D human
-    class X artifact
-```
+![Ablaufdiagramm: 7. Werkzeuge, die schon im Einsatz sind](diagrams/gs-in-use_de.svg)
 
 **Wartung** ist Teil des Verfahrens: Jedes Upstream-Update ist eine neue,
 ungeprüfte Version. Eine Fork-Überwachung meldet neue Releases; die Patches werden erneut
@@ -288,21 +232,7 @@ eines Werkzeugs ist Daten, nie Anweisung.
 Eine Patch-Runde ist nicht fertig, wenn der Code geschrieben ist. Sie ist fertig, wenn jemand sie
 geprüft hat, der sie nicht geschrieben hat:
 
-```mermaid
-flowchart LR
-    P["Patch-Runde<br>ein Commit"] --> T["Abschlusstest<br>Codex, nur lesend,<br>frühere Befunde zuerst"]
-    T -- NOT APPROVED --> P
-    T -- APPROVED --> A["Eigentümer gibt<br>Containerlauf für<br>diese SHA frei"]
-    A --> C["Containertest<br>Fork und Upstream,<br>dieselben Tests"]
-    C --> B["Verhaltensprobe<br>Programme, Verbindungen,<br>Dateien"]
-    B --> R["Freigabe"]
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
-    class P,R producer
-    class T,C,B adversary
-    class A human
-```
+![Ablaufdiagramm: 9. Wie eine Korrektur danach geprüft wird](diagrams/gs-fix-check_de.svg)
 
 1. **Abschlusstest.** Eine frische Codex-Sitzung prüft die Runde und beginnt mit den Befunden der
    Vorrunde: Sind sie wirklich geschlossen? Die Antwort endet in `FINAL TEST: APPROVED` oder
@@ -320,24 +250,7 @@ flowchart LR
 Die Sandbox beruht auf einer Annahme: **Das geprüfte Werkzeug ist feindlich, bis das Gegenteil
 gezeigt ist.**
 
-```mermaid
-flowchart TD
-    S["setup.sh<br>Netzwerk und Proxy"] --> K{"check.sh<br>alle Prüfungen bestanden?"}
-    K -- nein --> STOP["Kein Container<br>startet"]
-    K -- ja --> I["Installationsphase<br>internes Netz,<br>Ausgang nur über Proxy"]
-    I --> D["Netzwerk trennen<br>und prüfen"]
-    D --> R["Tests oder Probe<br>ganz ohne Netz"]
-    R --> L["Proxy-Protokoll<br>in die Ergebnisse"]
-    L --> F{"Blockierte<br>Versuche?"}
-    F -- ja --> FD["Befund:<br>wohin wollte es?"]
-    F -- nein --> OK["Ergebnis"]
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    classDef stop fill:#b3261e,stroke:#6e1612,color:#fff
-    class S,K,I,D,R,L,F adversary
-    class FD,OK artifact
-    class STOP stop
-```
+![Ablaufdiagramm: 10. Wie angegriffen und getestet wird](diagrams/gs-attack-test_de.svg)
 
 | Schutz | Wirkung |
 |---|---|
@@ -428,23 +341,7 @@ folgen derselben Lehre, dass nie der prüft, der etwas gemacht hat, aber sie pr�
 
 Sie arbeiten zusammen:
 
-```mermaid
-flowchart LR
-    T["Fremdes Werkzeug<br>Plugin, MCP-Server,<br>Paket"] --> SC["ujc-security-checker<br>Prüfung, Sandbox,<br>Urteil"]
-    SC -- nicht einsetzen --> X["Bericht"]
-    SC -- freigegeben oder<br>gehärteter Fork --> P["Eigenes Projekt"]
-    I["Eigene Idee<br>oder Änderung"] --> CL["claudex-loop<br>Plan, Bau,<br>Abnahme"]
-    P --> CL
-    CL --> R["Geprüfte Änderung"]
-    CL -.->|"Wrapper codex_ro.py<br>und /audit"| SC
-    P -. Werkzeug-Update .-> SC
-    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
-    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
-    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
-    class T,P,I producer
-    class SC,CL adversary
-    class X,R artifact
-```
+![Ablaufdiagramm: 13. Zusammenspiel mit claudex-loop](diagrams/gs-claudex-loop_de.svg)
 
 - Ein Werkzeug, das Teil eines Projekts werden soll (Abhängigkeit, Plugin, MCP-Server), geht zuerst
   durch den Checker. Erst danach wird es eingebaut, und diese Änderung geht durch claudex-loop.

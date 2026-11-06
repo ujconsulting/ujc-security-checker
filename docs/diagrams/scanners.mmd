@@ -1,0 +1,11 @@
+flowchart LR
+    P1["Phase 1, offline<br>network none<br>secrets, SAST, Actions,<br>Dockerfiles, metrics, SBOM"] --> P2["Phase 2, online<br>internal network, proxy list scanner<br>osv-scanner, trivy, grype<br>database downloads only"]
+    P2 --> P3["Phase 3, summary<br>scan-summary.md<br>without network"]
+    P3 --> R["Short version<br>into the record"]
+    class P1,P2,P3 adversary
+    class R artifact
+    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
+    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
+    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
+    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
+    classDef stop fill:#b3261e,stroke:#6e1612,color:#fff

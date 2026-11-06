@@ -8,9 +8,11 @@ This repository is public. The gate refuses what must not go out:
                repositories that are not on the allow list (private/public_check_allow.txt)
   ai           AI attribution (co-author trailers, "generated with/written by <AI>" lines);
                naming Claude Code or Codex as a platform or reviewer tool is fine
-  german       German text outside files named *_de.md (word-list heuristic plus umlauts)
+  german       German text outside files named *_de.md, *_de.mmd, *_de.svg (word-list heuristic
+               plus umlauts)
   pairing      README.md without README_de.md; skill without README.md/README_de.md;
-               *_de.md without a source header or with a stale source hash
+               *_de.md without a source header or with a stale source hash; the same for
+               docs/diagrams/*.svg against its .mmd source
   embargo      anything under private/ tracked; GHSA ids or K-numbered confidential
                findings in public files unless the register marks them published
   tracked      tracked files that .gitignore excludes (they would still be published)
@@ -386,7 +388,7 @@ def scan_content(path: str, data: bytes, ctx: Context, findings: list, exempt_fi
                          "CR line ending", False))
     text = data.decode("utf-8", "replace")
     name = path.rsplit("/", 1)[-1]
-    is_de = name.endswith("_de.md")
+    is_de = name.endswith(("_de.md", "_de.mmd", "_de.svg"))
     if RECORD_OK.match(path):
         # rows count only with a value, outside code fences and HTML comments
         body = re.sub(r"^(```|~~~).*?^\1[^\n]*$", "", text, flags=re.M | re.S)
@@ -462,7 +464,9 @@ def check_pairing(root: Path, files: list, findings: list, reader=None):
             for doc in ("README.md", "README_de.md"):
                 if folder + doc not in published:
                     add(f, f"skill without {folder}{doc}")
-        if not f.endswith(".md"):
+        if fnmatch.fnmatchcase(f, "docs/diagrams/*.mmd") and f[:-4] + ".svg" not in published:
+            add(f, f"diagram source without its image {f[:-4]}.svg")
+        if not f.endswith((".md", ".svg")):
             continue
         raw = reader(f)
         if raw is None:
@@ -472,6 +476,8 @@ def check_pairing(root: Path, files: list, findings: list, reader=None):
         except UnicodeDecodeError:
             continue
         headers = source_headers(text)
+        if fnmatch.fnmatchcase(f, "docs/diagrams/*.svg") and not headers:
+            add(f, "diagram without a source header <!-- source: <file>.mmd sha256:<hash> -->")
         if name.endswith("_de.md") and not headers:
             add(f, "German file without a source header <!-- source: <file> sha256:<hash> -->")
         for src, digest in headers:
@@ -903,6 +909,22 @@ def self_test() -> int:
             git(lroot, "update-index", "--add", "--cacheinfo", f"160000,{'1' * 40},vendor/lib")
             _, f = check_tree(lroot, Context(lroot), staged=True)
             expect("record silent on a gitlink elsewhere", not any(x[0] == "record" for x in f))
+
+        # a diagram image is bound to its source (both directions)
+        write("docs/diagrams/a.mmd", "flowchart TD\n")
+        _, f = check_tree(root, Context(root))
+        expect("diagram source without image", any("without its image" in x[3] for x in f))
+        write("docs/diagrams/a.svg", "<svg></svg>\n")
+        _, f = check_tree(root, Context(root))
+        expect("diagram without source header", any("diagram without a source header" in x[3] for x in f))
+        write("docs/diagrams/a.svg", "<!-- source: a.mmd sha256:0 -->\n<svg></svg>\n")
+        _, f = check_tree(root, Context(root))
+        expect("diagram stale", any(x[1] == "docs/diagrams/a.svg" and "stale" in x[3] for x in f))
+        stamp(root, ["docs/diagrams/a.svg"])
+        _, f = check_tree(root, Context(root))
+        expect("diagram silent when stamped", not any("docs/diagrams/" in x[1] for x in f))
+        (root / "docs/diagrams/a.mmd").unlink()
+        (root / "docs/diagrams/a.svg").unlink()
 
         # pairing and staleness
         write("tools/README.md", "# Tools\n")

@@ -1,0 +1,15 @@
+flowchart LR
+    T["Fremdes Werkzeug<br>Plugin, Skill, MCP-Server,<br>CLI, Paket"] --> R["LESEN<br>Quarantäne-Klon,<br>Scanner, zwei Prüfer"]
+    R --> H{"Eigentümer<br>entscheidet"}
+    H -- nicht einsetzen --> X["Bericht mit<br>Urteil"]
+    H -- Containerlauf<br>freigeben --> C["EINMAL AUSFÜHREN<br>isolierter Container,<br>alles beobachtet"]
+    C --> U["Einsatz unter<br>bekannten Bedingungen"]
+    R -. Befunde, nur auf<br>Anweisung .-> D["Meldung an<br>Upstream"]
+    classDef producer fill:#d97757,stroke:#7a3a24,color:#fff
+    classDef adversary fill:#10a37f,stroke:#0a6b54,color:#fff
+    classDef human fill:#e8b93e,stroke:#8a6a14,color:#1a1a1a
+    classDef artifact fill:#3d3d3d,stroke:#6b6b6b,color:#fff
+    class T,U,D producer
+    class R,C adversary
+    class H human
+    class X artifact
