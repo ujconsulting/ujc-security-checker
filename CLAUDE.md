@@ -43,7 +43,7 @@ content under `private/` may be German); commit messages are in English.
    use) lives only under `private/repos/<name>/` (`reviews/`, `implementation/CHANGELOG.md`,
    `README-own-version.md`, `usage-analysis.md`).
 4. **Codex**: model from the role configuration or the default. Final tests `gpt-6-astra`, effort
-   **medium**; rechecks `gpt-6-sol`/medium. Higher effort only after approval. **One run per quota
+   **medium**; rechecks `gpt-6.1-sol`/medium. Higher effort only after approval. **One run per quota
    window, one after another, never in parallel.** Always via `python tools/codex_ro.py`
    (read-only), from the checker root (loads `AGENTS.md` = reviewer role) - for review rounds of a
    record through `python tools/ledger.py run codex ... -- <codex_ro.py args>`, which records the
@@ -155,7 +155,8 @@ Transient files go into the session scratchpad or `.claudex-tmp/`, never into th
   `private/disclosures/` in the root hold only what belongs to the checker itself (inbox of its own
   repository, `own_repos.md`, `watch_config*`, its own findings, `seen.json`, `mail_status.json`,
   `NEW.flag`, `reactions.jsonl`, `leak_names.txt`). Everything about a reviewed repository lives
-  with its record under `private/records/<record>/disclosures/` (see Layout); nothing of it is
+  with its record under `private/records/<record>/disclosures/`, confidential material under
+  `private/repos/<record>/disclosures/` (see Layout); nothing of it is
   published in `repos/`. The record of an entry is the field `record`,
   else the draft's folder, else the record whose README names the repository as "Upstream"; a
   disclosure to a foreign repository without a record is refused before anything goes out. Legacy

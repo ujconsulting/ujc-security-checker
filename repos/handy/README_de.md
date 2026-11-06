@@ -1,4 +1,4 @@
-<!-- source: README.md sha256:86464d5063208937b412478998706e97b8a038b0c3112cfc5230d4e32a23c32c -->
+<!-- source: README.md sha256:46db07dc8ad2df563c7a9003a5b1d479a88f08bd4602625785f68885d6a784c5 -->
 [English](README.md) | [Deutsch](README_de.md)
 
 # handy - review summary
@@ -30,7 +30,7 @@ Befunde höher ein als der andere. Insgesamt ist das Risiko gering bis mittel.
 - Jedes Diktat wird als Audio und Text gespeichert, und die Aufbewahrung lässt sich auf unbegrenzt stellen.
 - Schlüssel für den optionalen Sprachmodell-Anbieter liegen im Klartext in den Einstellungen.
 - Die Ausgabe dieses Anbieters wird ungefiltert eingefügt und könnte bei aktiviertem Auto-Absenden eine Aktion auslösen.
-- Die Build-Pipeline nutzt per Tag fixierte Actions und einige ungeprüfte Downloads; Abhängigkeits-Meldungen bestehen, sind aber meist nicht erreichbar.
+- Die Build-Pipeline nutzt per Tag fixierte Actions und einige ungeprüfte Downloads; Abhängigkeits-Meldungen bestehen, scheinen unter macOS aber überwiegend nicht erreichbar.
 
 ## Empfehlung
 

@@ -1,4 +1,4 @@
-<!-- source: README.md sha256:9299c0d1199618e218544c3d3694c66ebe72844a8cf64f156e0e3dec7df07915 -->
+<!-- source: README.md sha256:c782b5dd00f292d5aea07b790b2c61313300fa76130e06d0afd8fe9d624ba995 -->
 [English](README.md) | [Deutsch](README_de.md)
 
 # ujc-security-checker
@@ -64,7 +64,7 @@ cd ujc-security-checker
 git config core.autocrlf false                   # Dateien sind LF
 python tools/public_check.py --self-test          # Python 3.10+, nur Standardbibliothek
 shellcheck --version                              # Pflicht, siehe Voraussetzungen
-tools/setup.sh --check                            # Sandbox-Status (Docker); Exit 0 = bereit
+tools/setup.sh --check                            # Sandbox-Status (Docker); Exit 0 = bereit, Exit 1 vor der ersten Einrichtung
 tools/setup.sh                                    # Egress-Netz, Proxy, Scanner-Image einrichten
 python tools/codex_skills_sync.py --check         # Skills für Codex gespiegelt
 ```

@@ -1,4 +1,4 @@
-<!-- source: README.md sha256:f8f53105bf208f378327cf7a9c2e48fd4519a5ebe0666ea0669cc7e7410a4517 -->
+<!-- source: README.md sha256:b9517274fdf7ee88bf0b079e9ede18fd5c1aab448595fbec4d5398c00be58b58 -->
 [English](README.md) | [Deutsch](README_de.md)
 
 # oh-my-claudecode - Kurzfassung der Prüfung
@@ -18,12 +18,12 @@ Das Plugin bündelt viele nützliche Workflow-Funktionen: Agenten für Planung, 
 Notizen und mehrere autonome Modi. Genau diese Breite ist das Problem. Es registriert viele Hooks auf nahezu jedes
 Ereignis, liefert große vorgebaute Bundles aus, die nur stichprobenartig gegen den Quellcode geprüft wurden, und
 enthält eine automatische Berechtigungsentscheidung, die manche Befehle weiter freigibt, als ein Nutzer erwartet.
-Mehrere Befunde wurden an Upstream gemeldet. Insgesamt räumt die geprüfte Version dem Plugin mehr Befugnis über den
+Insgesamt räumt die geprüfte Version dem Plugin mehr Befugnis über den
 Rechner des Nutzers ein, als sich rechtfertigen lässt.
 
 ## Hauptrisiken
 - Ein Berechtigungs-Hook kann Befehle anhand grober Mustervergleiche automatisch freigeben.
-- Autonome Modi und Team-Modus können ohne menschliche Kontrolle breit committen oder Dateien ändern.
+- Autonome Modi und Team-Modus können ohne menschliche Kontrolle breit committen oder Dateien ändern. Startoptionen können die Berechtigungs- und Sandbox-Kontrollen anderer Kommandozeilen-Agenten abschalten, und Folgesitzungen können ohne die globalen Hooks des Nutzers laufen.
 - Hooks lesen und schreiben Agenten-Zustand und Einstellungen, auch an Stellen, die Zugangsdaten enthalten können.
 - Gebaute Bundles im Repository lassen sich schwer gegen den lesbaren Quellcode prüfen.
 - Globaler Installer und Updater verändern die Umgebung des Nutzers über das Plugin hinaus.

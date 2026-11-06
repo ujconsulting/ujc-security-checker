@@ -1,4 +1,4 @@
-<!-- source: README.md sha256:5a32321b00223d4b8a6c079a5a855b70e96b1fb6ab6f7e9116dff89a24c42b14 -->
+<!-- source: README.md sha256:177227e6f50aee7d69878c4ee9c71e1c5fdac970805061ea3d37c6e12a00a3f7 -->
 [English](README.md) | [Deutsch](README_de.md)
 
 # rustdesk - review summary
@@ -29,7 +29,7 @@ mittel und hängt stark von der Konfiguration ab. Die Prüfung war statisch und 
 - Ein Direktverbindungsmodus ohne Verschlüsselung und ohne Host-Authentifizierung erlaubt die Übernahme durch einen Angreifer im selben Netz.
 - Rückfälle auf Klartext oder auf einen ungeprüften Server-Schlüssel kann ein Nutzer durch Wegklicken eines Dialogs zulassen.
 - Dauerpasswörter werden als schneller Hash gespeichert und nur durch schwache Begrenzungen gegen Durchprobieren geschützt.
-- Großzügige Voreinstellungen (Dateiübertragung, Terminal, Tunnel, Zwischenablage) sowie optionaler Update- und Telemetrieverkehr.
+- Großzügige Voreinstellungen (Dateiübertragung, Terminal, Tunnel, Zwischenablage) sowie eine standardmäßig aktive Update-Prüfung, die einen Hardware-Fingerabdruck sendet.
 - Der Vermittlungsserver ist die Vertrauensbasis; wer ihn kontrolliert, kann Sitzungen mitlesen.
 - Das Werkzeug wird häufig für Betrug per Fernzugriff missbraucht, und gefälschte Download-Seiten existieren.
 
@@ -37,7 +37,8 @@ mittel und hängt stark von der Konfiguration ab. Die Prüfung war statisch und 
 
 Vertretbar für Personen, die den Server selbst betreiben, den Server-Schlüssel auf jedem Client setzen,
 pro Rechner lange, zufällige und eindeutige Passwörter nutzen und Direktzugriff per IP, LAN-Erkennung,
-unnötige Rechte sowie automatische Updates abschalten. Nur aus der offiziellen Quelle installieren und
+unnötige Rechte sowie die Update-Prüfung abschalten. Bei eigenem Server auch den Verwaltungs-API-Pfad des Clients
+entschärfen und Dialoge zu unsicheren Verbindungen nie bestätigen. Nur aus der offiziellen Quelle installieren und
 den Download prüfen. Keine Vorabversion einsetzen. Nicht auf Rechnern einsetzen, bei denen unbekannte
 Dritte den Kontakt auslösen können.
 

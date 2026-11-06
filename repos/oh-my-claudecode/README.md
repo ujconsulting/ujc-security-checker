@@ -16,12 +16,12 @@
 The plugin bundles a large set of useful workflow features: planning, review and verification agents, persistent notes
 and several autonomous modes. That breadth is also the problem. It registers many hooks on almost every event, ships
 large pre-built bundles that were checked only by sampling against the source, and includes an automatic permission
-decision that approves some commands more broadly than a user would expect. Several findings were reported upstream.
+decision that approves some commands more broadly than a user would expect.
 Overall the reviewed version gives the plugin more authority over the user's machine than can be justified.
 
 ## Main risks
 - A permission hook can auto-approve commands based on loose pattern matching.
-- Autonomous and team modes can commit or change files broadly without a human check.
+- Autonomous and team modes can commit or change files broadly without a human check. Launch options can switch off the permission and sandbox controls of other command-line agents, and follow-up sessions can run without the user's global hooks.
 - Hooks read and write agent state and settings, including places that may hold credentials.
 - Built bundles in the repository are hard to verify against the readable source.
 - Global installer and updater behavior changes the user's environment beyond the plugin itself.

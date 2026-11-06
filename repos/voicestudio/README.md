@@ -14,7 +14,8 @@
 
 ## Assessment
 
-The release artifacts matched the published checksums and the tagged source, and the release process is
+The reviewed macOS release artifacts matched the published checksums and the backend source files matched the tag; the
+frontend bundle was only spot-checked, not rebuilt. The release process is
 reasonably careful. The application is large and young, and it does a lot: it builds a Python runtime on
 first start, downloads models and engine components from several sources, and exposes a local API that
 has no authentication of its own. Optional features add further reach, such as LAN sharing, helper agents

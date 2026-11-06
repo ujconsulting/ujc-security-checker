@@ -27,7 +27,7 @@ moderate and depends strongly on configuration. The review was static and did no
 - A direct-connection mode without encryption or host authentication allows takeover by an attacker on the same network.
 - Fallbacks to plaintext or to an unverified server key can be accepted by a user clicking through a dialog.
 - Permanent passwords are stored as a fast hash and protected by weak brute-force limits.
-- Permissive defaults (file transfer, terminal, tunnels, clipboard) and optional update and telemetry traffic.
+- Permissive defaults (file transfer, terminal, tunnels, clipboard) and an update check that is on by default and sends a hardware fingerprint.
 - The rendezvous server is the root of trust; whoever controls it can intercept sessions.
 - The tool is widely abused in remote-access scams, and fake download sites exist.
 
@@ -35,7 +35,8 @@ moderate and depends strongly on configuration. The review was static and did no
 
 Acceptable for people who self-host the server, configure the server key on every client, use long unique
 random passwords per machine, and switch off direct IP access, LAN discovery, unneeded permissions and
-automatic updates. Install only from the official source and verify the download. Do not use a
+the update check. With a self-hosted server also neutralise the client's management API path, and never confirm
+insecure-connection dialogs. Install only from the official source and verify the download. Do not use a
 pre-release build. Do not use it on machines where untrusted parties may initiate the contact.
 
 ---

@@ -55,9 +55,9 @@ You are called in these forms; the prompt says which:
 
 | Form | Object | Model | Result line |
 |---|---|---|---|
-| **Initial audit** | quarantine clone `quarantine/<name>/` on a fixed commit | `gpt-6-sol`/medium | `VERDICT: ...` |
+| **Initial audit** | quarantine clone `quarantine/<name>/` on a fixed commit | `gpt-6.1-sol`/medium | `VERDICT: ...` |
 | **Final test** | hardened fork `<forks>/ujc-<name>` on a fixed commit (path in the prompt) | `gpt-6-astra`/medium | `FINAL TEST: ...` |
-| **Recheck** (intermediate review) | like the final test | `gpt-6-sol`/medium | `FINAL TEST: ...` |
+| **Recheck** (intermediate review) | like the final test | `gpt-6.1-sol`/medium | `FINAL TEST: ...` |
 | **Disclosure cross-check** | outgoing disclosure text in the prompt + quarantine clone on the cited commit | from `.env`, default `gpt-6.1-sol`/medium | `CHECK: ...` |
 | **Finding validation** | finding fields + outgoing text in the prompt + quarantine clone on the cited commit | from `.env` / claudex-loop role, default `gpt-6.1-sol`/medium | `FINDING: ...` |
 | **Exposure pass** | finding fields + outgoing text in the prompt + quarantine clone on the cited commit | from `.env` / claudex-loop role, default `gpt-6.1-sol`/medium | `EXPOSURE: ...` |

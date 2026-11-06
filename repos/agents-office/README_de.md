@@ -1,4 +1,4 @@
-<!-- source: README.md sha256:a721f5c5049ea3a908c280b8fa80c85bfb18404b885b0a800ffa8ca6ac887b94 -->
+<!-- source: README.md sha256:f04ae4e114a2d829b817c3d1529d7396e3c4b241376f35357b9cded7f9583db0 -->
 [English](README.md) | [Deutsch](README_de.md)
 
 # agents-office - Kurzfassung der Prüfung
@@ -17,7 +17,7 @@
 Agents Office bietet eine bequeme lokale Oberfläche, um ein Team von Agenten mit zeitgesteuerten Routinen zu betreiben.
 Die geprüfte Version gibt diesen Agenten sehr weitreichenden Zugriff: Sie erben alle angebundenen Dienste des Nutzers,
 können ohne Anwesenheit des Nutzers handeln, und gespeicherte Ergebnisse fließen in spätere Prompts zurück. Der Schutz
-gegen Missbrauch durch nicht vertrauenswürdige Inhalte oder andere lokale Prozesse ist dünn. Das Projekt ist eine Beta,
+gegen Missbrauch durch nicht vertrauenswürdige Inhalte oder Aufrufer aus dem Netzwerk ist unzureichend. Das Projekt ist eine Beta,
 und die Lizenz schränkt die kommerzielle Nutzung ein. Auf jedem Rechner mit echten Mail-, Kalender- oder
 Browser-Sitzungen sind die Risiken ernst.
 
@@ -25,7 +25,7 @@ Browser-Sitzungen sind die Risiken ernst.
 - Agenten erhalten Zugriff auf alle angebundenen Dienste und standardmäßig auf den angemeldeten Browser des Nutzers.
 - Zeitgesteuerte Routinen handeln selbstständig, sodass manipulierte Eingaben unbeaufsichtigt Aktionen auslösen können.
 - Gespeicherte Ergebnisse und gelernte Regeln werden als Prompt-Eingabe wiederverwendet, was dauerhafte Manipulation ermöglicht.
-- Die lokale Oberfläche ist nur begrenzt gegen andere Prozesse oder Webseiten auf demselben Rechner geschützt.
+- Der lokale Dienst schränkt nicht ausreichend ein, wer ihn aufrufen darf: Andere Rechner im Netzwerk und im Browser des Nutzers geöffnete Webseiten können Aktionen auslösen, die mit den Anbindungen und dem Browser des Nutzers laufen. Als kritisch eingestuft.
 - Ein gespeichertes Anmelde-Token wird für eine Nutzungsanzeige gelesen und an einen nicht öffentlich dokumentierten Endpunkt des Herstellers gesendet.
 - Die Lizenz ist nicht-kommerziell und hat Zusatzbedingungen, was den Einsatz in Unternehmen einschränkt.
 

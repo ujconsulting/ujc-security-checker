@@ -1,4 +1,4 @@
-<!-- source: README.md sha256:e25a5253b4cc20c25123a94254f79421d580d65590c146810879776f2e8ec9e3 -->
+<!-- source: README.md sha256:648d2583571398c63f333ec6b281e7a2fef264d4aafb543d7b784d908c77ba6c -->
 [English](README.md) | [Deutsch](README_de.md)
 
 # rustdesk-server - review summary
@@ -28,9 +28,9 @@ Server ohne zusätzliche Maßnahmen erreichbar ist.
 
 - Paketverarbeitung, die sich für Reflexions- und Verstärkungsangriffe gegen Dritte missbrauchen lässt.
 - Eine Schlüsseloption, die nur bei einigen Anfragearten geprüft wird, sodass die meisten Protokollpfade auch ohne sie funktionieren.
-- Eine bekanntermaßen verwundbare Parser-Abhängigkeit vor jeder Schlüsselprüfung, durch die entfernte Eingaben Abstürze auslösen können.
+- Eine Parser-Abhängigkeit mit bekanntem Sicherheitshinweis steht vor jeder Schlüsselprüfung; ein Absturz aus der Ferne ist plausibel, wurde aber nicht verifiziert.
 - Ungehärtete Standard-Dienstkonfiguration: volle Rechte, lax geschützte Schlüsseldatei, offenes Relay ohne Schlüssel.
-- Keine Größen- oder Ratenbegrenzung vor der Anmeldung, was Ressourcenerschöpfung ermöglicht.
+- Keine wirksame Begrenzung der Paketgröße oder der Verbindungen vor der Anmeldung; die vorhandenen Registrierungsgrenzen genügen gegen Ressourcenerschöpfung nicht.
 - Ein täglicher ausgehender Aufruf beim Hersteller mit stabiler Geräte-Kennung sowie langfristige Speicherung von Client-Adressen.
 
 ## Empfehlung
@@ -39,7 +39,9 @@ Nur einsetzen, wenn aus dem geprüften Quelltext mit aktualisierten Abhängigkei
 Upstream-Korrekturen eingespielt werden), das Schlüsselpaar vorab erzeugt und geschützt wird, die Dienste
 als unprivilegierter, gehärteter Dienst laufen und die Firewall auf die nötigen Ports mit Ratenbegrenzung
 und Filterung ausgehender Verbindungen beschränkt ist. Starke, eindeutige Passwörter auf jedem Zielrechner
-bleiben die eigentliche Sicherheitsgrenze. Die unveränderten Release-Pakete nicht direkt ins Internet stellen.
+bleiben die eigentliche Sicherheitsgrenze. Ein Neubau der Abhängigkeiten und allgemeine Ratenbegrenzungen
+allein genügen nicht: den Schlüssel auf beiden Diensten erzwingen, die nicht benötigten Web-Socket-Dienste sperren,
+ausgehende Filterung gegen Reflexion ergänzen und keinen lokalen Reverse-Proxy davorsetzen. Die unveränderten Release-Pakete nicht direkt ins Internet stellen.
 
 ---
 *Statische Prüfung der oben genannten Version; keine Gewähr, spätere Versionen können abweichen. Vorgehen: siehe [Projekt-README](../../README_de.md).*

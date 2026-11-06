@@ -366,7 +366,7 @@ def write_readme(entries=None) -> None:
             repo = next((e.get("repo") for e in items if e.get("repo")), record)
             if public:
                 _write_pair(pub_dir, ("REGISTER.md", "REGISTER_de.md"), public, 0, "title_record",
-                            repo, "../../../")
+                            repo, "../../../../")
             else:
                 for name in ("REGISTER.md", "REGISTER_de.md"):
                     if (pub_dir / name).exists():

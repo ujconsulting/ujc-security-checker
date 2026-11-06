@@ -63,7 +63,7 @@ cd ujc-security-checker
 git config core.autocrlf false                   # files are LF
 python tools/public_check.py --self-test          # Python 3.10+, standard library only
 shellcheck --version                              # required, see prerequisites
-tools/setup.sh --check                            # sandbox status (Docker); exit 0 = ready
+tools/setup.sh --check                            # sandbox status (Docker); exit 0 = ready, exit 1 before the first setup
 tools/setup.sh                                    # set up egress network, proxy, scanner image
 python tools/codex_skills_sync.py --check         # skills mirrored for Codex
 ```

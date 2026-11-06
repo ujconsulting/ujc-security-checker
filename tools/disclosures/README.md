@@ -49,9 +49,8 @@ Fail-closed rules of the submit tools: the policy check always uses the disclosu
 "not found" (only 404 means "no SECURITY.md"); a critical finding as a public issue/comment
 treats the leak scan's "exploit detail?" findings (PoC, payload, reverse shell, exploit) as
 errors; the leak scan covers every field that is sent (advisory: summary, description and the
-serialised `vulnerabilities`, cvss, cwe_ids; reaction: labels); `register.py publish` moves a
-draft only if its register path is a regular, non-symlinked `.md` file below
-`private/disclosures/` or `private/repos/`; register writes are atomic and serialised by a lock
+serialised `vulnerabilities`, cvss, cwe_ids; reaction: labels); `register.py publish` only marks
+the entry as public and leaves the draft where it is; register writes are atomic and serialised by a lock
 file `private/disclosures/register.lock` (stale after 10 minutes).
 
 Policy check (mandatory for issue, comment, advisory, email): every draft carries the field

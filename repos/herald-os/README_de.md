@@ -1,4 +1,4 @@
-<!-- source: README.md sha256:1328024f14e86e59f73ba8181468061529a91dbbc28dc1cdbf017889f88c592b -->
+<!-- source: README.md sha256:7a6eb2e4135edb57f45454b7e8b07a18ae7adff7aebe2a64921c42ebf5c63ef9 -->
 [English](README.md) | [Deutsch](README_de.md)
 
 # herald-os - Kurzfassung der Prüfung
@@ -16,13 +16,15 @@
 ## Bewertung
 Herald OS ist eine frühe Alpha eines einzelnen Maintainers mit sehr hoher Commit-Rate und einem jungen Repository. Es
 hat durchdachte Schutzansätze wie Berechtigungsstufen, eine Richtliniendatei und ein Audit-Protokoll für die
-Werkzeuge zur Maschinensteuerung, und das Upstream-Projekt hat private Schwachstellenmeldungen aktiviert. Release-
+Werkzeuge zur Maschinensteuerung (sie sind Komfortkontrollen, keine Sicherheitsgrenze, und das Audit-Protokoll ist
+nicht manipulationssicher), und das Upstream-Projekt hat private Schwachstellenmeldungen aktiviert. Release-
 Artefakte werden aber nur mit Prüfsummen statt Signaturen ausgeliefert und wurden nicht gegen den getaggten Quellcode
 verglichen. Die Prüfung hielt es für das Szenario, es zu einer bestehenden Headless-Agenten-Installation
 hinzuzufügen, für ungeeignet. Der Scanner-Lauf fand keine Geheimnisse und einige transitive Abhängigkeitshinweise.
 
 ## Hauptrisiken
 - Das Agenten-Plugin kann Anwendungen, Dateien und Bildschirm steuern, ein manipulierter Agent hat daher große Reichweite.
+- Das Linux-Image legt ein privilegiertes Konto ohne Passwort an, mit automatischer Anmeldung und großzügigen Voreinstellungen der Sicherheitsrichtlinie.
 - Release-Images und Installer sind nicht signiert, was die Prüfung des Installierten einschränkt.
 - Installationsschritte hängen von nachgeladenen Komponenten ab, die nicht strikt festgelegt sind.
 - Das Projekt ist Alpha, wird von einer Person gepflegt und ändert sich sehr schnell.
@@ -31,7 +33,7 @@ hinzuzufügen, für ungeeignet. Der Scanner-Lauf fand keine Geheimnisse und eini
 
 ## Empfehlung
 Nicht auf einem Rechner mit echten Daten oder Konten einsetzen. Wer es ausprobieren will, tut das nur in einer
-wegwerfbaren virtuellen Maschine ohne echte Zugangsdaten, baut aus dem Quellcode statt Release-Artefakten zu
+wegwerfbaren virtuellen Maschine in einem eigenen Netzsegment, mit sofort gesetztem Passwort und ohne echte Zugangsdaten, baut aus dem Quellcode statt Release-Artefakten zu
 vertrauen und wartet auf eine reifere, signierte Version, bevor es breiter eingesetzt wird.
 
 ---

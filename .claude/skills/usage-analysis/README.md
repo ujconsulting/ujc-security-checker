@@ -1,4 +1,4 @@
-<!-- source: SKILL.md sha256:29188bc9821f7209002913eceacd24b192c1f8701c1854581c20d8d046c4d4dd -->
+<!-- source: SKILL.md sha256:1c23830f926dc0a7ce7b9e0c6ba67f5193c02e05fba910b024361583221e7f7e -->
 [English](README.md) | [Deutsch](README_de.md)
 
 # usage-analysis
@@ -34,7 +34,7 @@ it. The analysis defines the scope of use against which the threat model is writ
 
 ## Commands
 
-None of its own. Template: `private/templates/usage-analysis.md`; result:
+None of its own. Template: `templates/usage-analysis.md`; result:
 `private/repos/<name>/usage-analysis.md`; the public summary `repos/<name>/README.md` is not updated with it.
 
 ## Example

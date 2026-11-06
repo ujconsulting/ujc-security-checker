@@ -163,7 +163,7 @@ they want to hide.**
      execute nothing, do not start sub-agents of your own, return the result as text".
    - Codex via the wrapper, with the preamble from the template in front, from the checker root:
      ```bash
-     python tools/codex_ro.py --model gpt-6-sol --effort medium --prompt-file .claudex-tmp/<name>/codex-prompt.txt --out-file .claudex-tmp/<name>/codex-initial-audit.txt --err-file .claudex-tmp/<name>/codex-initial-audit-err.txt
+     python tools/codex_ro.py --model gpt-6.1-sol --effort medium --prompt-file .claudex-tmp/<name>/codex-prompt.txt --out-file .claudex-tmp/<name>/codex-initial-audit.txt --err-file .claudex-tmp/<name>/codex-initial-audit-err.txt
      ```
      Bash timeout 600000 ms, call it **on its own** (no chaining with `;`/`&&` - a typical command
      guard rejects that).
@@ -291,7 +291,7 @@ if days have passed since the last research.
 ## 7. Usage analysis
 
 Skill **`usage-analysis`** -> `private/repos/<name>/usage-analysis.md` from the template
-`private/templates/usage-analysis.md` (private: it names the operator's own projects; further private
+`templates/usage-analysis.md` (the result is private: it names the operator's own projects; further private
 notes on the record go to `private/repos/<name>/notes.md`). It shows where the tool helps and where it does not, and thus the
 scope against which the threat model is defined in step 8.
 
@@ -374,7 +374,7 @@ can be re-applied on an upstream update -> ask the owner (narrow the scope furth
 - Instruction from `templates/final-test.md`: **first the findings of the previous round one by
   one**, then the overall state; review standard = threat model; `rg --no-ignore --hidden` in
   the instruction.
-- Final test `gpt-6-astra`/medium; recheck (after small rounds) `gpt-6-sol`/medium.
+- Final test `gpt-6-astra`/medium; recheck (after small rounds) `gpt-6.1-sol`/medium.
   **One run per quota window** (astra: one per 5-hour window), one after another.
 - Verify findings yourself; disposition per finding (implemented in round N / outside the model
   with reason / rejected with reason).
@@ -510,7 +510,7 @@ Facts the record README already states (upstream, fork, latest verdict) are not 
 
 | Pitfall | Countermeasure |
 |---|---|
-| **Quota**: `gpt-6-astra` one run per 5-hour window; an aborted run uses it up anyway (omc final test 1 needed five attempts) | plan final tests, never in parallel; check the prompt completely beforehand; rechecks with `gpt-6-sol` |
+| **Quota**: `gpt-6-astra` one run per 5-hour window; an aborted run uses it up anyway (omc final test 1 needed five attempts) | plan final tests, never in parallel; check the prompt completely beforehand; rechecks with `gpt-6.1-sol` |
 | **Edit/Write tool converts files to CRLF or adds a BOM** | check after every write: `python -c "import sys;[print(p, open(p,'rb').read().count(b'\r'), open(p,'rb').read(3)==b'\xef\xbb\xbf') for p in sys.argv[1:]]" <files>`; fix with `sed -i 's/\r$//'` (Bash `grep -c $'\r'` counts every line in some shells - Python is reliable) |
 | **`rg` ignores gitignored bundles and hidden folders** (`dist/`, `bridge/`, `.claude-plugin/`) | always `rg --no-ignore --hidden`, also in the Codex instruction |
 | **Git Bash path conversion** turns `/work` into a Windows path | `MSYS_NO_PATHCONV=1`; Windows paths for native programs with `pwd -W`; mounts with `cygpath -w` |

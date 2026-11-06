@@ -1,4 +1,4 @@
-<!-- source: SKILL.md sha256:e378631d0ff7c1bb121748c718816640c829af451a969c54d189aa70ca368c6e -->
+<!-- source: SKILL.md sha256:2e823f418bee07a81aeeb21e43b3ab1ab0383b5f44651b5bbd040d645ceb7652 -->
 [English](README.md) | [Deutsch](README_de.md)
 
 # finding-disclosure

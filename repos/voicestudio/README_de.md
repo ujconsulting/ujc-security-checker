@@ -1,4 +1,4 @@
-<!-- source: README.md sha256:98c7e7252a46dd2ef3d03c0abce2f5659c6ea9a8e43d030e390d2a2aec628c9f -->
+<!-- source: README.md sha256:92bd56e7328828aade5c132212bddbe094b2fa0d59490507221f908708e3be8b -->
 [English](README.md) | [Deutsch](README_de.md)
 
 # voicestudio - review summary
@@ -15,8 +15,9 @@
 
 ## Einschätzung
 
-Die Release-Dateien stimmten mit den veröffentlichten Prüfsummen und dem getaggten Quelltext überein, und
-der Release-Prozess ist recht sorgfältig. Die Anwendung ist groß und jung und tut viel: Sie baut beim
+Die geprüften macOS-Release-Dateien stimmten mit den veröffentlichten Prüfsummen überein und die Quelldateien des
+Backends mit dem Tag; das Frontend-Bundle wurde nur stichprobenartig geprüft, nicht neu gebaut. Der
+Release-Prozess ist recht sorgfältig. Die Anwendung ist groß und jung und tut viel: Sie baut beim
 ersten Start eine Python-Laufzeit, lädt Modelle und Engine-Komponenten aus mehreren Quellen und stellt
 eine lokale API bereit, die keine eigene Authentifizierung hat. Optionale Funktionen erweitern die
 Reichweite, etwa Freigabe im lokalen Netz, Hilfsagenten, die installierte Coding-Werkzeuge starten, und

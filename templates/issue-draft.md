@@ -44,7 +44,7 @@ you do not want to state it (the exposure pass then only records its verdict).
   "severity_reason": "<one sentence>",
   "upstream_ref": "<branch>@<sha>, <tag>",
   "policy": {
-    "blob_sha": "<blob SHA from channel.py --policy, or null without SECURITY.md>",
+    "blob_sha": "<security_md.blob_sha of the evidence file from channel.py --policy, or null without SECURITY.md>",
     "path": "SECURITY.md",
     "checked_at": "<YYYY-MM-DD>",
     "versions": "<supported per policy; met?>",

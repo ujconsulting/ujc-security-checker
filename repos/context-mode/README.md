@@ -24,8 +24,8 @@ open-source license.
 - Hooks on almost all tool events give the plugin a view of, and influence over, everything the agent does.
 - Session records may keep sensitive prompts and command output in a local database.
 - Runtime dependency installation and self-upgrade from a moving branch weaken supply chain control.
-- Code execution tools in many languages widen what a manipulated agent can run.
-- A global hook is written into the user's agent settings.
+- Its code execution tools run outside the host's command guards and without isolation: subprocesses keep the real home folder, credentials and full network and file access.
+- It changes the user's global agent configuration on every start, repairs and re-enables itself, and leaves a hook behind after uninstalling.
 - No reporting channel exists for security findings, and the dependency set had known gaps.
 
 ## Recommendation

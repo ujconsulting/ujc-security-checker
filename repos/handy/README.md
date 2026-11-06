@@ -28,7 +28,7 @@ rated two of the findings higher than the other. Overall the risk is low to mode
 - Every dictation is stored as audio and text, and the retention setting can be configured to keep data forever.
 - Keys for the optional language-model provider are stored in plain text in the settings.
 - Output of that provider is pasted unfiltered and, with auto-submit enabled, could trigger an action.
-- Build pipeline uses tag-pinned actions and some unverified downloads; dependency advisories exist but appear mostly unreachable.
+- Build pipeline uses tag-pinned actions and some unverified downloads; dependency advisories exist but appear mostly unreachable on macOS.
 
 ## Recommendation
 

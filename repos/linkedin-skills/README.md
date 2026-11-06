@@ -35,7 +35,8 @@ scraping and automated posting. Overall the risk is low in draft mode and modera
 
 Fine for drafting use: install a fixed copy of the reviewed version in project scope, run without any
 keys, and use only the drafting skills. If publishing is enabled, use a single publishing key stored
-locally, keep every action on manual approval, avoid scraping-based features and unattended sessions,
+locally, keep script execution on per-call approval, never on an allowlist, leave the scheduling and custom
+posting paths unused (approval written only in the skill text does not restrain the publishing code), avoid scraping-based features and unattended sessions,
 keep personal data out of version control, and verify every figure in a draft yourself.
 
 ---

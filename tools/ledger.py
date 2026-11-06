@@ -502,11 +502,18 @@ def cmd_run_codex(a) -> int:
     return proc.returncode
 
 
+def round_files(root: Path) -> list:
+    """Review rounds of the upstream review and of an own version, in a fixed order."""
+    private = root / "private"
+    return sorted(list((private / "records").glob("*/reviews/round-*.md"))
+                  + list((private / "repos").glob("*/reviews/round-*.md")))
+
+
 def cmd_run_backfill(a) -> int:
     rows = load_runs()
     have = {(r.get("record"), r.get("round"), r.get("step")) for r in rows}
     added, skipped = [], []
-    for path in sorted((ROOT / "private" / "records").glob("*/reviews/round-*.md")):
+    for path in round_files(ROOT):
         record = path.parent.parent.name
         row = run_from_round(record, path)
         if row is None:
@@ -649,6 +656,10 @@ def self_test() -> int:
                       "| Reviewer | Codex `gpt-6-astra`/medium (read-only) |\n"
                       "| Verdict | `FINAL TEST: NOT APPROVED` |\n\n## Brief\n| Verdict | approved |\n",
                       encoding="utf-8")
+        own = root / "private" / "repos" / "tool" / "reviews" / "round-05-recheck.md"
+        own.parent.mkdir(parents=True)
+        own.write_text("# Round 05\n", encoding="utf-8")
+        check("backfill sees both review locations", round_files(root) == sorted([rf, own]))
         r = run_from_round("tool", rf)
         check("round header parsed", r is not None and r["step"] == "final-test" and r["reviewer"] == "codex"
               and r["model"] == "gpt-6-astra" and r["effort"] == "medium" and r["commit"] == "a62dbbd"

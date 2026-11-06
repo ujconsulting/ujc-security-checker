@@ -1,4 +1,4 @@
-<!-- source: SKILL.md sha256:da80398d900bc31cad31b09ac46fef4886043a96ecacda5420d48761c60bd9a9 -->
+<!-- source: SKILL.md sha256:c1c6b4e94c468347e4d2140b4097a182c17156efbabe2fa17e3e9ec3083f6f59 -->
 [English](README.md) | [Deutsch](README_de.md)
 
 # tool-review
@@ -62,7 +62,7 @@ push, a disclosure, a Codex effort above medium, two Codex runs in parallel.
 ```bash
 python tools/quarantine_clone.py <source> <name> --ref <tag-or-sha>   # owner/name, alias:owner/name, URL, path
 tools/scan.sh quarantine/<name> .claudex-tmp/<name>/scan
-python tools/codex_ro.py --model gpt-6-sol --effort medium \
+python tools/codex_ro.py --model gpt-6.1-sol --effort medium \
     --prompt-file .claudex-tmp/<name>/codex-prompt.txt \
     --out-file .claudex-tmp/<name>/codex-initial-audit.txt \
     --err-file .claudex-tmp/<name>/codex-initial-audit-err.txt

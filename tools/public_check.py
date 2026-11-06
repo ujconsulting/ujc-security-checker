@@ -17,7 +17,9 @@ This repository is public. The gate refuses what must not go out:
   format       CR line endings or a UTF-8 BOM
   record       any path below repos/ other than repos/<name>/README.md and
                repos/<name>/README_de.md (reviews, disclosures, policy evidence ... live in the
-               gitignored private/records/<name>/; only the summary README is versioned).
+               gitignored private/records/<name>/; only the summary README is versioned); such a
+               README without the table rows of a summary (e.g. the upstream README of a local
+               clone); an embedded git repository below repos/ (mode 160000, it has no blob).
                Reported in every mode including --history (old commits count until history is
                rewritten)
 
@@ -76,7 +78,8 @@ from pathlib import Path
 
 DENYLIST = "private/public_check_denylist.txt"
 ALLOWLIST = "private/public_check_allow.txt"
-DEFAULT_ALLOW = ("ujconsulting/claudex-loop", "ujconsulting/ujc-security-checker")
+DEFAULT_ALLOW = ("ujconsulting/claudex-loop", "ujconsulting/ujc-security-checker",
+                 "ujconsulting/uj-isse-meta-framework")  # the public repositories in disclosures/own_repos.md
 REGISTER = "disclosures/register.json"
 MAX_BYTES = 5 * 1024 * 1024
 # Binary files are not inspectable; they are findings unless the extension is listed here.
@@ -86,6 +89,13 @@ BINARY_OK_EXT = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico", ".pdf",
 
 # Record layout: below repos/ only the summary READMEs are versioned.
 RECORD_OK = re.compile(r"^repos/[^/]+/README(?:_de)?\.md$")
+# A README of the right name is not yet a summary: an upstream README of a local clone has the same
+# path. These table rows (templates/repo-README.md) are what makes it one.
+RECORD_ROWS = ("Upstream", "Reviewed version", "Verdict", "Recommendation")
+RECORD_ROWS_DE = ("Upstream", "Geprüfte Version", "Urteil", "Empfehlung")  # public-check: allow german
+RECORD_MAX_LINES = 60  # a summary is short; the template and all summaries stay below this
+RECORD_GITLINK = ("embedded git repository below repos/ (a local clone, not a summary; "
+                  "git rm --cached and stage single paths)")
 
 # Per-file exemptions from whole checks, with the reason.
 FILE_EXEMPT = {
@@ -377,6 +387,17 @@ def scan_content(path: str, data: bytes, ctx: Context, findings: list, exempt_fi
     text = data.decode("utf-8", "replace")
     name = path.rsplit("/", 1)[-1]
     is_de = name.endswith("_de.md")
+    if RECORD_OK.match(path):
+        # rows count only with a value and outside code fences
+        body = re.sub(r"^(```|~~~).*?^\1[^\n]*$", "", text, flags=re.M | re.S)
+        missing = [r for r in (RECORD_ROWS_DE if is_de else RECORD_ROWS)
+                   if not re.search(rf"^\|[ \t]*{re.escape(r)}[ \t]*\|[ \t]*[^|\s]", body, re.M)]
+        if missing:
+            findings.append(("record", path, 0, "not a review summary (template templates/repo-README.md), "
+                             f"rows missing: {', '.join(missing)}", False))
+        if text.count("\n") > RECORD_MAX_LINES:
+            findings.append(("record", path, 0, f"not a review summary: longer than {RECORD_MAX_LINES} lines "
+                             "(details belong in private/records/<name>/)", False))
     is_md = name.endswith(".md")
     if is_de or path.startswith("private/"):
         skip.add("german")
@@ -484,6 +505,16 @@ def staged_blobs(root: Path):
     return blobs
 
 
+def index_gitlinks(root: Path):
+    """Paths of the index that are embedded repositories (mode 160000)."""
+    links = []
+    for entry in git(root, "ls-files", "-s", "-z").split("\0"):
+        meta, _, path = entry.partition("\t")
+        if meta.startswith("160000 "):
+            links.append(path)
+    return links
+
+
 def crlf_by_attr(root: Path, files: list) -> set:
     """Paths whose checkout line ending is CRLF by design, asked of git itself (one call):
     eol=crlf from .gitattributes, with text set or auto. An error raises (fail closed)."""
@@ -522,6 +553,9 @@ def check_tree(root: Path, ctx: Context, staged: bool = False):
     tracked_private = [f for f in git(root, "ls-files", "-c", "-z", "--", "private").split("\0") if f]
     for f in tracked_private:
         findings.append(("embargo", f, 0, "file under private/ is tracked (git rm --cached)", False))
+    for f in index_gitlinks(root):
+        if f.startswith("repos/"):
+            findings.append(("record", f, 0, RECORD_GITLINK, False))
     ignored = [f for f in git(root, "ls-files", "-ci", "--exclude-standard", "-z").split("\0")
                if f and (staged or (root / f).exists()) and not f.startswith("private/")]
     for f in ignored:
@@ -543,6 +577,17 @@ def rev_blobs(root: Path, rev: str):
         if len(parts) == 3 and parts[1] == "blob":
             blobs[path] = parts[2]
     return blobs
+
+
+def rev_gitlinks(root: Path, rev: str):
+    """Paths of the tree of one commit that are embedded repositories (type commit)."""
+    links = []
+    for entry in git(root, "ls-tree", "-r", "-z", rev).split("\0"):
+        meta, _, path = entry.partition("\t")
+        parts = meta.split()
+        if len(parts) == 3 and parts[1] == "commit":
+            links.append(path)
+    return links
 
 
 def ignored_by_commit_rules(paths: list, gitignores: dict) -> list:
@@ -605,6 +650,9 @@ def check_revs(root: Path, revs: list):
         for f in files:
             if f.startswith("private/"):
                 local.append(("embargo", f, 0, "file under private/ is tracked (git rm --cached)", False))
+        for f in rev_gitlinks(root, commit):
+            if f.startswith("repos/"):
+                local.append(("record", f, 0, RECORD_GITLINK, False))
         gitignores = {f: reader(f) for f in files if f.rsplit("/", 1)[-1] == ".gitignore"}
         for f in ignored_by_commit_rules(files, gitignores):
             if not f.startswith("private/"):
@@ -630,6 +678,8 @@ def check_history(root: Path, ctx: Context):
                 blobs.setdefault((parts[2], path), c[:7])
                 if path.startswith("private/"):
                     findings.append(("embargo", f"{c[:7]}:{path}", 0, "file under private/ in history", False))
+            elif len(parts) == 3 and parts[1] == "commit" and path.startswith("repos/"):
+                findings.append(("record", f"{c[:7]}:{path}", 0, RECORD_GITLINK, False))
     # keyed on (blob, path): the same content under another path is checked again, because
     # language, embargo and exemptions depend on the path
     for (sha, path), commit in sorted(blobs.items(), key=lambda kv: (kv[0][1], kv[0][0])):
@@ -807,10 +857,41 @@ def self_test() -> int:
             findings = []
             scan_content(rel, b"# x", ctx, findings)
             expect(f"record fires: {rel}", any(x[0] == "record" for x in findings))
-        for rel in ("repos/a/README.md", "repos/a/README_de.md", "docs/x.md", "tools/repos/x.md"):
+        summary = "".join(f"| {r} | x |\n" for r in RECORD_ROWS).encode("utf-8")
+        summary_de = "".join(f"| {r} | x |\n" for r in RECORD_ROWS_DE).encode("utf-8")
+        for rel, body in (("repos/a/README.md", summary), ("repos/a/README_de.md", summary_de),
+                          ("docs/x.md", b"# x"), ("tools/repos/x.md", b"# x")):
             findings = []
-            scan_content(rel, b"# x", ctx, findings)
+            scan_content(rel, body, ctx, findings)
             expect(f"record silent: {rel}", not any(x[0] == "record" for x in findings))
+        # a README of the right name that is no summary (upstream README of a local clone)
+        for rel, body in (("repos/a/README.md", b"# Some tool\n\nInstall it.\n"),
+                          ("repos/a/README_de.md", "# Werkzeug\n".encode("utf-8")),
+                          ("repos/a/README.md", summary.replace(b"Verdict", b"Result")),
+                          ("repos/a/README_de.md", summary),
+                          ("repos/a/README.md", summary.replace(b"| x |", b"|  |")),
+                          ("repos/a/README.md", b"```\n" + summary + b"```\n"),
+                          ("repos/a/README.md", summary + b"audit detail\n" * 80)):
+            findings = []
+            scan_content(rel, body, ctx, findings)
+            expect(f"record fires on a non-summary: {rel}",
+                   any(x[0] == "record" and "not a review summary" in x[3] for x in findings))
+        # an embedded repository below repos/ has no blob: index, pushed commit and history
+        with tempfile.TemporaryDirectory() as linktmp:
+            lroot = Path(linktmp)
+            git(lroot, "init", "-q")
+            git(lroot, "update-index", "--add", "--cacheinfo", f"160000,{'1' * 40},repos/klon")
+            _, f = check_tree(lroot, Context(lroot), staged=True)
+            expect("record fires on a staged gitlink", any(x[0] == "record" and x[1] == "repos/klon" for x in f))
+            git(lroot, "commit", "-q", "-m", "gitlink")
+            _, f = check_revs(lroot, ["HEAD"])
+            expect("record fires on a gitlink in a commit", any(x[0] == "record" and x[1] == "repos/klon" for x in f))
+            _, _, f = check_history(lroot, Context(lroot))
+            expect("record fires on a gitlink in history", any(x[0] == "record" and "repos/klon" in x[1] for x in f))
+            git(lroot, "update-index", "--force-remove", "repos/klon")
+            git(lroot, "update-index", "--add", "--cacheinfo", f"160000,{'1' * 40},vendor/lib")
+            _, f = check_tree(lroot, Context(lroot), staged=True)
+            expect("record silent on a gitlink elsewhere", not any(x[0] == "record" for x in f))
 
         # pairing and staleness
         write("tools/README.md", "# Tools\n")
@@ -903,7 +984,7 @@ def self_test() -> int:
             "url": "", "draft": f"repos/a/disclosures/{kid}-advisory.md"}]))
         ctx = Context(root)
         findings = []
-        scan_content("repos/a/README.md", f"{ghsa} and {kid} are published\n".encode(), ctx, findings)
+        scan_content("repos/a/README.md", f"{ghsa} and {kid} are published\n".encode() + summary, ctx, findings)
         expect("published advisory allowed", not findings)
         findings = []
         scan_content("repos/b/README.md", f"{kid} of another record\n".encode(), ctx, findings)

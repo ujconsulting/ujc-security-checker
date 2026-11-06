@@ -38,7 +38,8 @@ git config core.autocrlf false
 python tools/public_check.py --self-test
 ```
 
-Expected result: `public_check self-test: OK`. All files are LF; with `core.autocrlf false` git
+Expected result: `public_check self-test: OK`; the FINDING lines before it come from the test on
+purpose. All files are LF; with `core.autocrlf false` git
 does not convert them (the gate reports CR line endings as findings).
 
 ## 3. Local configuration: `.env` and secrets
@@ -104,7 +105,7 @@ the "claudex" section of `.env.example`; the effective values print with
 One entry point, idempotent (skill [`sandbox-setup`](../.claude/skills/sandbox-setup/README.md)):
 
 ```bash
-tools/setup.sh --check      # status only, changes nothing
+tools/setup.sh --check      # status only, changes nothing; exit 1 until the first full run
 tools/setup.sh              # set up or complete (first run: a few minutes, ~1 GB downloads)
 tools/setup.sh --rebuild    # recreate the proxy, rebuild the image without cache
 tools/setup.sh --remove     # teardown: proxy, network, scanner images, DB volume, state
@@ -187,10 +188,12 @@ python tools/public_check.py --history       # plus every commit and commit mess
 python tools/public_check.py --stamp README_de.md   # refresh the source hash after translating
 ```
 
-Optional private lists (gitignored): `private/public_check_denylist.txt` (internal names, one per
-line, `re:` for a regular expression; never printed, only "denylist entry #N") and
-`private/public_check_allow.txt` (own public repositories that may be named). The disclosure leak
-scan reads the same deny list.
+Private lists (gitignored): `private/public_check_denylist.txt` (internal names, one per line, `re:`
+for a regular expression; never printed, only "denylist entry #N") and
+`private/public_check_allow.txt` (own public repositories that may be named). Both are optional for
+the gate. **Before any disclosure the deny list must exist:** the disclosure leak scan reads it and
+refuses to run without it. An empty file is a deliberate "none":
+`mkdir -p private && touch private/public_check_denylist.txt`.
 
 ## 8. Scheduled watch task (Windows, only after the owner's decision)
 
@@ -206,7 +209,9 @@ Expected result: the dry run changes nothing; `-Install` registers the task
 `UJC-Disclosure-Watch`, which runs `python tools/disclosures/disclosure_watch.py --flag` daily. On
 news or errors it creates `private/disclosures/NEW.flag` and shows a balloon; log
 `private/disclosures/watch.log`. `-VaultEnv` is only needed for the mailbox (step 3). Manual run:
-`python tools/disclosures/disclosure_watch.py` (exit 0 nothing new, 1 news, 2 error).
+`python tools/disclosures/disclosure_watch.py` (exit 0 nothing new, 1 news, 2 error). It also reads the
+upstream repositories named in `repos/*/README.md` through the GitHub API, which can take several minutes
+without output; `--no-repos` limits it to your own repositories.
 
 ## 9. Before the repository goes public
 

@@ -1,4 +1,4 @@
-<!-- source: README.md sha256:7e3fdae4fd835c701a6f3e69d23d9e273d388a12605e4907214a286b5f926b3e -->
+<!-- source: README.md sha256:f09a8888174e901b6424e47b7991707ae9478e2accf64dac1eb1e94cc4288d39 -->
 [English](README.md) | [Deutsch](README_de.md)
 
 # linkedin-skills - review summary
@@ -36,10 +36,11 @@ Entwurfsmodus gering und mit aktivierten Schlüsseln mittel.
 
 ## Empfehlung
 
-Unbedenklich für die Nutzung als Entwurfshilfe: eine feste Kopie der geprüften Version im Projektumfang
+Unter diesen Bedingungen vertretbar für die Nutzung als Entwurfshilfe: eine feste Kopie der geprüften Version im Projektumfang
 installieren, ganz ohne Schlüssel arbeiten und nur die Entwurfs-Skills nutzen. Wird das Veröffentlichen
-aktiviert, nur einen einzelnen Veröffentlichungsschlüssel lokal ablegen, jede Aktion manuell freigeben,
-auf Scraping-Funktionen und unbeaufsichtigte Sitzungen verzichten, personenbezogene Daten aus der
+aktiviert, nur einen einzelnen Veröffentlichungsschlüssel lokal ablegen, die Skriptausführung bei jedem Aufruf einzeln freigeben, nie über eine Allowlist, die Pfade für
+Zeitplanung und eigenes Posten ungenutzt lassen (eine nur im Skill-Text niedergeschriebene Freigabe bindet den
+Veröffentlichungscode nicht), auf Scraping-Funktionen und unbeaufsichtigte Sitzungen verzichten, personenbezogene Daten aus der
 Versionsverwaltung heraushalten und jede Zahl in einem Entwurf selbst prüfen.
 
 ---

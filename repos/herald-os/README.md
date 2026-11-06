@@ -14,7 +14,8 @@
 
 ## Assessment
 Herald OS is an early alpha by a single maintainer with a very high commit rate and a young repository. It has some
-thoughtful safeguards, such as permission tiers, a policy file and an audit log for the machine-control tools, and the
+thoughtful safeguards, such as permission tiers, a policy file and an audit log for the machine-control tools (they are usability controls, not a security boundary, and the audit log is not
+tamper-evident), and the
 upstream project has private vulnerability reporting enabled. However, release artifacts are only accompanied by
 checksums, not signatures, and were not compared against the tagged source. The review judged it a poor fit for the
 scenario of adding it to an existing headless agent setup. The scanner run found no secrets and a few transitive
@@ -22,6 +23,7 @@ dependency advisories.
 
 ## Main risks
 - The agent plugin can control applications, files and the screen, so a manipulated agent has wide reach.
+- The Linux image creates a privileged account without a password, with automatic login and permissive security policy defaults.
 - Release images and installers are unsigned, which limits verification of what is installed.
 - Installer steps depend on downloaded components that are not strictly pinned.
 - The project is alpha, maintained by one person and changes very quickly.
@@ -30,7 +32,7 @@ dependency advisories.
 
 ## Recommendation
 Do not use it on a machine with real data or accounts. Readers who want to try it should do so only in a disposable
-virtual machine without real credentials, build from source rather than trusting release artifacts, and wait for a
+virtual machine in a separate network segment, with a password set immediately and no real credentials, build from source rather than trusting release artifacts, and wait for a
 more mature, signed release before any wider use.
 
 ---

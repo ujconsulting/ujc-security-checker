@@ -1,4 +1,4 @@
-<!-- source: README.md sha256:68813be42b169806e142210d98fc8abd941001e706ba319fab26dfd18a8cd519 -->
+<!-- source: README.md sha256:94913eccda4a460549cd453e8cd895a220cd396f41227571bffc9c3bb8e6f5dd -->
 [English](README.md) | [Deutsch](README_de.md)
 
 # usage-analysis
@@ -35,7 +35,7 @@ sagt nichts zum eigenen Einsatz.
 
 ## Befehle
 
-Keine eigenen. Vorlage: `private/templates/usage-analysis.md`; Ergebnis:
+Keine eigenen. Vorlage: `templates/usage-analysis.md`; Ergebnis:
 `private/repos/<name>/usage-analysis.md`; die öffentliche Zusammenfassung `repos/<name>/README.md` wird nicht damit ergänzt.
 
 ## Beispiel

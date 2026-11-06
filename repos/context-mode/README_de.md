@@ -1,4 +1,4 @@
-<!-- source: README.md sha256:1a5d6a3e0fe998fe0a2cfa3f463feb5af6cdf1244e00ca3d9a2b83c859708c01 -->
+<!-- source: README.md sha256:ea6192f2caf26ca1ecb4d70c2835eaeaaddb203af3c356c984851713a8d0976a -->
 [English](README.md) | [Deutsch](README_de.md)
 
 # context-mode - Kurzfassung der Prüfung
@@ -25,8 +25,8 @@ gebunden ist. Upstream hatte damals keinen Meldekanal für Sicherheitsthemen. Di
 - Hooks auf fast alle Werkzeug-Ereignisse geben dem Plugin Einblick in und Einfluss auf alles, was der Agent tut.
 - Sitzungsaufzeichnungen können sensible Prompts und Befehlsausgaben in einer lokalen Datenbank halten.
 - Nachinstallation von Abhängigkeiten zur Laufzeit und Selbstaktualisierung von einem beweglichen Branch schwächen die Lieferkettenkontrolle.
-- Werkzeuge zur Codeausführung in vielen Sprachen erweitern, was ein manipulierter Agent ausführen kann.
-- Ein globaler Hook wird in die Agenten-Einstellungen des Nutzers geschrieben.
+- Die Werkzeuge zur Codeausführung laufen außerhalb der Befehlswächter des Hosts und ohne Isolation: Unterprozesse behalten das echte Home-Verzeichnis, die Zugangsdaten sowie vollen Netzwerk- und Dateizugriff.
+- Es verändert bei jedem Start die globale Agenten-Konfiguration des Nutzers, repariert und aktiviert sich selbst wieder und hinterlässt nach der Deinstallation einen Hook.
 - Für Sicherheitsbefunde gibt es keinen Meldekanal, und der Abhängigkeitsbestand hatte bekannte Lücken.
 
 ## Empfehlung

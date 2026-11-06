@@ -1,4 +1,4 @@
-<!-- source: README.md sha256:4df25eae6e8f65c9bf44bfa8cf710a44c5bfbc3e61a34979b229fbac68ea6acb -->
+<!-- source: README.md sha256:bd18f0ad1d6039c5195513d079780b9f4ead72daf95138478e4c47a037e17b37 -->
 [English](README.md) | [Deutsch](README_de.md)
 
 # tools/disclosures - Befunde melden, Offenlegungen und den Posteingang verfolgen
@@ -51,8 +51,8 @@ Fehler, nie „nicht gefunden“ (nur 404 heißt „keine SECURITY.md“); bei e
 öffentliches Issue/Kommentar zählen die „exploit detail?“-Funde des Leak-Scans (PoC, Payload,
 Reverse Shell, Exploit) als Fehler; der Leak-Scan deckt jedes gesendete Feld ab (Advisory: Summary,
 Beschreibung sowie serialisierte `vulnerabilities`, cvss, cwe_ids; Reaktion: Labels);
-`register.py publish` verschiebt einen Entwurf nur, wenn sein Registerpfad eine reguläre `.md`-Datei
-ohne Symlink unter `private/disclosures/` oder `private/repos/` ist; Registerschreibzugriffe sind
+`register.py publish` markiert den Eintrag nur als öffentlich und lässt den Entwurf, wo er liegt;
+Registerschreibzugriffe sind
 atomar und über eine Sperrdatei `private/disclosures/register.lock` serialisiert (veraltet nach
 10 Minuten).
 

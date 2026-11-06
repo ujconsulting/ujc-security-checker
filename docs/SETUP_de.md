@@ -1,4 +1,4 @@
-<!-- source: SETUP.md sha256:ed89d1ffdb0efd79b6034c25b302a3e785cbe0fcc3ce29dded975b00f74e8101 -->
+<!-- source: SETUP.md sha256:176457beac86ac6f7090a9e0fbd2199f6cc5fd09fe7c5112c5b590cb94022717 -->
 [English](SETUP.md) | [Deutsch](SETUP_de.md)
 
 # Einrichtung
@@ -40,7 +40,8 @@ git config core.autocrlf false
 python tools/public_check.py --self-test
 ```
 
-Erwartetes Ergebnis: `public_check self-test: OK`. Alle Dateien sind LF; mit
+Erwartetes Ergebnis: `public_check self-test: OK`; die FINDING-Zeilen davor erzeugt der Test mit
+Absicht. Alle Dateien sind LF; mit
 `core.autocrlf false` wandelt git sie nicht um (die Prüfung meldet CR-Zeilenenden als Befund).
 
 ## 3. Lokale Konfiguration: `.env` und Secrets
@@ -107,7 +108,7 @@ Abschnitt „claudex“ der `.env.example`; die wirksamen Werte zeigt
 Ein Einstiegspunkt, idempotent (Skill [`sandbox-setup`](../.claude/skills/sandbox-setup/README_de.md)):
 
 ```bash
-tools/setup.sh --check      # nur Status, ändert nichts
+tools/setup.sh --check      # nur Status, ändert nichts; Exit 1 bis zum ersten vollen Lauf
 tools/setup.sh              # einrichten oder ergänzen (erster Lauf: einige Minuten, ~1 GB Downloads)
 tools/setup.sh --rebuild    # Proxy neu anlegen, Image ohne Cache neu bauen
 tools/setup.sh --remove     # Abbau: Proxy, Netz, Scanner-Images, DB-Volume, Zustand
@@ -194,10 +195,12 @@ python tools/public_check.py --history       # zusätzlich jeder Commit und jede
 python tools/public_check.py --stamp README_de.md   # Quell-Hash nach dem Übersetzen erneuern
 ```
 
-Optionale private Listen (gitignoriert): `private/public_check_denylist.txt` (interne Namen, einer
-je Zeile, `re:` für einen regulären Ausdruck; werden nie ausgegeben, nur „denylist entry #N“) und
-`private/public_check_allow.txt` (eigene öffentliche Repositories, die genannt werden dürfen). Der
-Leak-Scan der Meldungen liest dieselbe Sperrliste.
+Private Listen (gitignoriert): `private/public_check_denylist.txt` (interne Namen, einer je Zeile,
+`re:` für einen regulären Ausdruck; werden nie ausgegeben, nur „denylist entry #N“) und
+`private/public_check_allow.txt` (eigene öffentliche Repositories, die genannt werden dürfen). Für
+die Prüfung sind beide optional. **Vor jeder Meldung muss die Sperrliste existieren:** Der Leak-Scan
+der Meldungen liest sie und verweigert ohne sie den Lauf. Eine leere Datei ist ein bewusstes „keine“:
+`mkdir -p private && touch private/public_check_denylist.txt`.
 
 ## 8. Geplante Beobachtungsaufgabe (Windows, erst nach Entscheidung des Auftraggebers)
 
@@ -215,7 +218,9 @@ Erwartetes Ergebnis: der Probelauf ändert nichts; `-Install` legt die Aufgabe
 startet. Bei Neuigkeiten oder Fehlern entsteht `private/disclosures/NEW.flag` und eine
 Sprechblase erscheint; Protokoll `private/disclosures/watch.log`. `-VaultEnv` ist nur für das
 Postfach nötig (Schritt 3). Manueller Lauf: `python tools/disclosures/disclosure_watch.py`
-(Exit 0 nichts Neues, 1 Neuigkeiten, 2 Fehler).
+(Exit 0 nichts Neues, 1 Neuigkeiten, 2 Fehler). Er liest auch die in `repos/*/README.md` genannten
+Upstream-Repositories über die GitHub-API, was mehrere Minuten ohne Ausgabe dauern kann; `--no-repos`
+beschränkt ihn auf die eigenen Repositories.
 
 ## 9. Bevor das Repository öffentlich wird
 

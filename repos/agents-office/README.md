@@ -16,14 +16,14 @@
 Agents Office offers a convenient local interface for running a team of agents with scheduled routines. The reviewed
 version gives these agents broad reach: they inherit all connected services of the user, can act without the user being
 present, and their stored outputs are fed back into later prompts. Protection against misuse by untrusted content or
-other local processes is thin. The project is a beta and its license restricts commercial use. The risks are serious
+callers on the network is inadequate. The project is a beta and its license restricts commercial use. The risks are serious
 for any machine that holds real mail, calendar or browser sessions.
 
 ## Main risks
 - Agents receive access to every connected service and, by default, the user's signed-in browser.
 - Scheduled routines act autonomously, so a manipulated input can trigger actions unattended.
 - Stored results and learned rules are reused as prompt input, which allows persistent manipulation.
-- The local interface has limited protection against other processes or web pages on the same machine.
+- The local service does not adequately restrict who can call it: other machines on the network and web pages open in the user's browser can trigger actions that run with the user's connectors and browser. Rated critical.
 - A stored login token is read for a usage display and sent to a vendor endpoint that is not publicly documented.
 - Licensing is non-commercial and has extra terms, which limits use in a company.
 

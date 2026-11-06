@@ -5,7 +5,7 @@ Template for final tests and intermediate rechecks (skill tool-review, step 10).
 The text under "Brief" goes to Codex as a prompt file:
   python tools/codex_ro.py --model gpt-6-astra --effort medium --prompt-file <file> --out-file <out> --err-file <err>
 (from the checker root, so that Codex loads its AGENTS.md; invocation mechanics: AGENTS.md).
-Final test = gpt-6-astra/medium, intermediate recheck = gpt-6-sol/medium. Higher effort only after
+Final test = gpt-6-astra/medium, intermediate recheck = gpt-6.1-sol/medium. Higher effort only after
 approval by the owner. One run per quota window, one after the other, never in parallel.
 Result of the run: private/repos/<name>/reviews/ (own version, not the public record).
 Fill it in as plain ASCII text (the prompts in October ran stably that way).

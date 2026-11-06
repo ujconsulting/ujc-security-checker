@@ -6,8 +6,8 @@ description: Analyses where a reviewed external tool helps in the owner's projec
 # usage-analysis - where the tool helps and where it does not
 
 Result: `private/repos/<name>/usage-analysis.md` from the template
-`private/templates/usage-analysis.md` (both private and gitignored - the analysis names the
-owner's own projects, hosts and data classes). The analysis justifies the scope of use against
+`templates/usage-analysis.md` (the result is private and gitignored - it names the
+owner's own projects, hosts and data classes; a local variant in `private/templates/` wins if present). The analysis justifies the scope of use against
 which the threat model is defined in `tool-review` step 8 - so it comes **before** the decision,
 not afterwards as advertising copy.
 

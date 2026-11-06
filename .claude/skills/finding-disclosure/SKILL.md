@@ -16,10 +16,10 @@ Rule since 12.10.2026: the root folders `disclosures/` and `private/disclosures/
 belongs to the checker itself**. Everything about a reviewed repository lives with its local
 record (`<record>` = folder name below `private/records/`); nothing of it is published in `repos/`:
 
-| local record (`private/records/<record>/disclosures/`, gitignored) | checker's own |
-|---|---|
-| `register.json`, `REGISTER.md` (generated), `reports/`, `policy/` (policy evidence), drafts of all kinds (critical ones under embargo) | public: `disclosures/` - the checker's own findings (`register.json`, `README.md`/`README_de.md`), `watch_config.json` |
-| `approvals/`, `checks/` (Codex records and outputs), `reply-drafts/` | `private/disclosures/` - `watch_config.local.json` (internals, merged in), inbox of its own repository (`inbox/`), `seen.json`, `mail_status.json`, `leak_names.txt`, `NEW.flag`, `watch.log`, `reactions.jsonl`, `reports/`, register of its own findings |
+| Layer of a reviewed repository (gitignored) | Content | Checker's own |
+|---|---|---|
+| `private/records/<record>/disclosures/` | `register.json`, `REGISTER.md` (generated), `reports/`, `policy/` (policy evidence), non-critical drafts | public: `disclosures/` - the checker's own findings (`register.json`, `README.md`/`README_de.md`), `watch_config.json` |
+| `private/repos/<record>/disclosures/` (confidential) | confidential register and reports, critical drafts under embargo, advisory and mail drafts, `approvals/`, `checks/` (Codex records and outputs), `reply-drafts/` | `private/disclosures/` - `watch_config.local.json` (internals, merged in), inbox of its own repository (`inbox/`), `seen.json`, `mail_status.json`, `leak_names.txt`, `NEW.flag`, `watch.log`, `reactions.jsonl`, `reports/`, register of its own findings |
 
 The record of an entry: field `record`, else the folder of its draft, else the record whose README
 names the repository as "Upstream". A disclosure to a foreign repository **without a record is
@@ -105,6 +105,7 @@ non-critical issues.
 
 ```bash
 python tools/disclosures/channel.py --policy <owner/name> [--store <folder>] --out .claudex-tmp/<name>/policy.md
+# --store private/records/<record>/disclosures/policy when the record is named differently from the repository
 ```
 
 (On another code host `<alias>:owner/name`; the policy file is searched in the same places, without
@@ -140,7 +141,7 @@ internal part + field `policy` in the JSON block):
 
 ```jsonc
 "policy": {
-  "blob_sha": "<from channel.py --policy>",          // null only without a SECURITY.md (repository + organisation)
+  "blob_sha": "<security_md.blob_sha of the evidence file from channel.py --policy>",          // null only without a SECURITY.md (repository + organisation)
   "path": "SECURITY.md",                             // "repo": "<owner>/.github" for an organisation default
   "checked_at": "2026-10-10",
   "versions": "...", "channel": "...", "scope": "...", "deadlines": "...",
@@ -187,10 +188,11 @@ search - look by hand.)
 
 Templates: `templates/issue-draft.md`, `templates/advisory-draft.md`,
 `templates/security-report-mail.md` (mail: `python tools/disclosures/mail_report.py new --id
-<id> --repo <o/r> --to <address> --out private/records/<name>/disclosures/<nn>-mail.md`).
+<id> --repo <o/r> --to <address> --out private/repos/<name>/disclosures/<nn>-mail.md`).
 
-- all drafts: `private/records/<name>/disclosures/<nn>-<topic>.md` - the tools refuse advisory
-  and mail drafts outside `private/`. **The public summary never mentions disclosures** - no
+- non-critical drafts: `private/records/<name>/disclosures/<nn>-<topic>.md`; critical, advisory and
+  mail drafts: `private/repos/<name>/disclosures/` - the tools refuse advisory and mail drafts
+  outside `private/`. **The public summary never mentions disclosures** - no
   counter, no dates, no channel, no order, neither in the hand-written README nor in generated
   files (per repository even a count reveals an embargo). Notes live under `private/` only.
 
