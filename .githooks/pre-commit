@@ -1,0 +1,3 @@
+#!/bin/sh
+# Public/private gate over the index (what is committed) before every commit, then the previous pre-commit hook (see _run_gate.sh).
+exec sh "$(git rev-parse --show-toplevel)/.githooks/_run_gate.sh" pre-commit --staged -- "$@"

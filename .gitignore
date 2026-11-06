@@ -1,0 +1,47 @@
+# --- Private part (this repository is public): usage analyses for own projects, internals
+#     (infrastructure, paths, project and customer names), critical findings under embargo,
+#     confidential disclosure register, approvals, mailbox state, inbox. Never commit.
+/private/
+CLAUDE.local.md
+
+# --- Quarantine clones of reviewed repositories (fixed commit, never committed)
+/quarantine/
+
+# --- Scratch files (audit briefs, Codex output, downloaded packages)
+/.claudex-tmp/
+/PLAN.md
+/PLAN-REVIEW-LOG.md
+
+# --- Secrets and local settings
+.env
+.env.*
+*.env
+!.env.example
+.claude/settings.local.json
+
+# --- Tool leftovers
+__pycache__/
+*.pyc
+node_modules/
+*.log
+.playwright-mcp/
+Thumbs.db
+desktop.ini
+
+# --- Local task mirroring of the operator: configuration, skill and task files stay local
+#     (they work on the operator's machine but are not published)
+/.claude/*.json
+!/.claude/settings.json
+/.claude/skills/tracker-sync/
+/.agents/skills/tracker-sync/
+/_todos/
+/_archiv/
+/repos/*/tasks/
+
+# --- Records: below repos/<name>/ only the summary README is versioned (details live in
+#     private/records/<name>/); this also keeps a nested clone or .git out of the tree
+/repos/*/*
+!/repos/*/README.md
+!/repos/*/README_de.md
+# reports moved to private/disclosures/public-reports/
+/disclosures/reports/

@@ -1,0 +1,21 @@
+# ujc-security-checker - Python requirements
+#
+# Nothing here is mandatory: every tool in tools/ uses the Python standard library only
+# (Python 3.10 or newer). `pip install -r requirements.txt` therefore installs nothing.
+#
+# --- Optional --------------------------------------------------------------------------
+# Only for the optional secret loader that tools/disclosures/mail_report.py can use via
+# UJC_VAULT_ENV (a loader that fetches secrets over SSH). Not needed if the security_mail_*
+# variables are set directly in the environment.
+# paramiko==5.0.0
+#
+# --- External programs (not installable with pip) -----------------------------------------
+# git            any recent version
+# gh             GitHub CLI, logged in with the scopes repo and security_events
+# docker         Docker Engine or Docker Desktop 28+ (Linux containers, amd64; isolated gateway of the sandbox network)
+# bash           4+ (Git Bash on Windows)
+# shellcheck     0.11+, required: lint of all shell scripts and git hooks (tools/setup.sh,
+#                steps 1 and 6); winget install koalaman.shellcheck | apt install shellcheck
+# powershell     Windows PowerShell 5.1+ (only for the scheduled watch task and setup.ps1)
+# coderabbit     CodeRabbit CLI, optional (tools/cr_full_review.sh)
+# codex          Codex CLI 0.156+, optional (second reviewer via tools/codex_ro.py)

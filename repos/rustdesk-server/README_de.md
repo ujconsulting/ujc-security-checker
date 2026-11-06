@@ -1,0 +1,45 @@
+<!-- source: README.md sha256:e25a5253b4cc20c25123a94254f79421d580d65590c146810879776f2e8ec9e3 -->
+[English](README.md) | [Deutsch](README_de.md)
+
+# rustdesk-server - review summary
+
+| | |
+|---|---|
+| Was | Selbst betreibbarer Vermittlungs- (ID-) Server und Relay für RustDesk-Clients, quelloffene Ausgabe |
+| Art | Rust-Netzwerkdienste, ausgeliefert als Pakete und Container-Image |
+| Upstream | `rustdesk/rustdesk-server` - Lizenz AGPL-3.0 |
+| Geprüfte Version | Tag `1.1.16` = `73523b31cfd25d77dee862e6fc9f5e1fb5e485ef` |
+| Geprüft am | 31.10.2026 |
+| Urteil | `USABLE WITH CONDITIONS` (Claude-Audit; Codex-Audit ausstehend) |
+| Empfehlung | nur mit Auflagen einsetzen |
+
+## Einschätzung
+
+Der Server ist klein und leitet keinen beliebigen Verkehr weiter, was einige Missbrauchswege begrenzt.
+Die Ende-zu-Ende-Verschlüsselung übernehmen die Clients, aber der ID-Server signiert die Schlüssel und
+ist damit die Vertrauensbasis. Die geprüfte Version hat mehrere Schwächen, die systembedingt aus dem
+Internet erreichbar sind: nur teilweise behobenes Reflexions- und Verstärkungsverhalten über UDP, eine
+Schlüsseloption, die weniger schützt, als sie vermuten lässt, und eine veraltete Parser-Bibliothek im
+Netzwerkpfad. Die mitgelieferten Voreinstellungen laufen mit vollen Rechten und ohne Härtung. Korrekturen
+liegen im Entwicklungszweig, waren aber nicht Teil des Releases. Das Risiko ist mittel bis hoch, wenn der
+Server ohne zusätzliche Maßnahmen erreichbar ist.
+
+## Hauptrisiken
+
+- Paketverarbeitung, die sich für Reflexions- und Verstärkungsangriffe gegen Dritte missbrauchen lässt.
+- Eine Schlüsseloption, die nur bei einigen Anfragearten geprüft wird, sodass die meisten Protokollpfade auch ohne sie funktionieren.
+- Eine bekanntermaßen verwundbare Parser-Abhängigkeit vor jeder Schlüsselprüfung, durch die entfernte Eingaben Abstürze auslösen können.
+- Ungehärtete Standard-Dienstkonfiguration: volle Rechte, lax geschützte Schlüsseldatei, offenes Relay ohne Schlüssel.
+- Keine Größen- oder Ratenbegrenzung vor der Anmeldung, was Ressourcenerschöpfung ermöglicht.
+- Ein täglicher ausgehender Aufruf beim Hersteller mit stabiler Geräte-Kennung sowie langfristige Speicherung von Client-Adressen.
+
+## Empfehlung
+
+Nur einsetzen, wenn aus dem geprüften Quelltext mit aktualisierten Abhängigkeiten gebaut wird (oder die
+Upstream-Korrekturen eingespielt werden), das Schlüsselpaar vorab erzeugt und geschützt wird, die Dienste
+als unprivilegierter, gehärteter Dienst laufen und die Firewall auf die nötigen Ports mit Ratenbegrenzung
+und Filterung ausgehender Verbindungen beschränkt ist. Starke, eindeutige Passwörter auf jedem Zielrechner
+bleiben die eigentliche Sicherheitsgrenze. Die unveränderten Release-Pakete nicht direkt ins Internet stellen.
+
+---
+*Statische Prüfung der oben genannten Version; keine Gewähr, spätere Versionen können abweichen. Vorgehen: siehe [Projekt-README](../../README_de.md).*

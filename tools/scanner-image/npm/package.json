@@ -1,0 +1,9 @@
+{
+  "name": "ujc-scanner-npm-tools",
+  "private": true,
+  "description": "Pinned npm tools for the scanner image ujc-scanner (lock file with integrity hashes)",
+  "dependencies": {
+    "jscpd": "5.4.1",
+    "knip": "6.41.0"
+  }
+}

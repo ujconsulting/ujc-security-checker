@@ -1,0 +1,5 @@
+#!/bin/sh
+# Public/private gate over the trees of the commits being pushed (read through git, the work tree
+# does not count) and the whole history before every push, then the previous pre-push hook
+# (see _run_gate.sh). Arguments: <remote-name> <remote-url>; refs on stdin.
+exec sh "$(git rev-parse --show-toplevel)/.githooks/_run_gate.sh" pre-push --history --pushed -- "$@"

@@ -1,0 +1,54 @@
+{
+  "_note": "Configuration for tools/disclosures/disclosure_watch.py (public). Internals (further accounts, paths) belong in private/disclosures/watch_config.local.json - lists are appended, objects merged. Upstream repositories also come from register.json and the field 'Upstream' in repos/*/README.md. own_repos = own public repositories (inbox, PVR, alerts). Keywords: a single word = word boundary, otherwise substring, case-insensitive.",
+  "own_accounts": [
+    "ujconsulting"
+  ],
+  "own_repos": [
+    "ujconsulting/ujc-security-checker"
+  ],
+  "max_items_per_repo": 20000,
+  "max_new_per_repo": 150,
+  "max_pr_file_queries_per_repo": 40,
+  "patch_ignore": [
+    "README.md",
+    "CHANGELOG.md",
+    "uv.lock",
+    "pyproject.toml",
+    "package.json",
+    "package-lock.json",
+    "tests/",
+    "test/",
+    "docs/",
+    "inventory/"
+  ],
+  "default_keywords": [
+    "security",
+    "vulnerability",
+    "permission",
+    "permissions",
+    "hook",
+    "hooks",
+    "credential",
+    "credentials",
+    "secret",
+    "secrets",
+    "token",
+    "redact",
+    "windows",
+    "powershell",
+    "CLAUDE.md",
+    "settings.json",
+    "install",
+    "installer",
+    "sandbox",
+    "injection",
+    "auto-approve",
+    "auto-allow",
+    "path traversal",
+    "ssrf",
+    "exfiltrat",
+    "telemetry",
+    "auto-update"
+  ],
+  "repos": {}
+}

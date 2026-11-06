@@ -1,0 +1,10 @@
+# Vulnerability databases for tools/scan.sh (only for the DB scanners, never for installations)
+# Activate: setup.sh scanner   (scan.sh switches to it itself and back afterwards)
+# osv-scanner: query API (sends package name + version, no code)
+api.osv.dev
+# trivy: database as an OCI artifact (default mirror.gcr.io, fallback ghcr.io)
+mirror.gcr.io
+ghcr.io
+pkg-containers.githubusercontent.com
+# grype: database (v6)
+grype.anchore.io
