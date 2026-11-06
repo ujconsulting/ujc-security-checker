@@ -57,7 +57,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from forge import forge_of  # noqa: E402
-from _submit import (already_submitted_exit, approval_or_abort, leak_check,  # noqa: E402
+from _submit import (already_submitted_exit, approval_note, approval_or_abort, leak_check,  # noqa: E402
                      policy_or_abort, prepare, register_entry, sending, show)
 from leak_scan import scan  # noqa: E402
 from _common import (AlreadySubmitted, DisclosureError, GhNotFound, PolicyError, err,  # noqa: E402
@@ -217,6 +217,7 @@ def main(argv=None) -> int:
             out("ERROR: PVR is not enabled - choose another channel (channel.py)")
             return 1
         if not a.submit:
+            approval_note(meta, raw, "advisory")
             out("DRY RUN: nothing submitted. Submit only with approval + --submit.")
             return 0
         approval_or_abort(meta, raw, "advisory")

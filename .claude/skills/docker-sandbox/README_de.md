@@ -1,4 +1,4 @@
-<!-- source: README.md sha256:4b6fff290989f72f9b90b5a999d7282d9dbb0177e1268c4f9192b1065d7739e9 -->
+<!-- source: README.md sha256:1575d499bc70b847b37d0108bd0142391a2c9fa8bf4a9d2f73335cbfb7efbf71 -->
 [English](README.md) | [Deutsch](README_de.md)
 
 # docker-sandbox
@@ -27,7 +27,7 @@ ausdrücklicher Freigabe** für genau dieses Werkzeug und diese Revision statt.
    läuft abgekoppelt.
 4. `network.txt` muss `network_disconnected` enthalten, sonst zählt der Lauf nicht.
 5. `egress.log` / `egress.log.blocked` lesen - jeder geblockte Versuch ist ein Befund.
-6. Gegen einen Upstream-Vergleichslauf auswerten; Ergebnis als Runde in `private/records/<name>/reviews/`.
+6. Gegen einen Upstream-Vergleichslauf auswerten; Ergebnis als Runde in `private/records/<name>/reviews/` (Upstream-Stand) oder `private/repos/<name>/reviews/` (eigene Fassung).
 
 Die verpflichtende Netzregel: nie das Standard-Bridge-Netz oder `--network host`; Installation nur
 in `ujc-sandbox-net` über `ujc-sandbox-proxy:3128` nach der Egress-Prüfung, danach das Netz

@@ -388,13 +388,14 @@ def scan_content(path: str, data: bytes, ctx: Context, findings: list, exempt_fi
     name = path.rsplit("/", 1)[-1]
     is_de = name.endswith("_de.md")
     if RECORD_OK.match(path):
-        # rows count only with a value and outside code fences
+        # rows count only with a value, outside code fences and HTML comments
         body = re.sub(r"^(```|~~~).*?^\1[^\n]*$", "", text, flags=re.M | re.S)
+        body = re.sub(r"<!--.*?-->", "", body, flags=re.S)
         missing = [r for r in (RECORD_ROWS_DE if is_de else RECORD_ROWS)
                    if not re.search(rf"^\|[ \t]*{re.escape(r)}[ \t]*\|[ \t]*[^|\s]", body, re.M)]
         if missing:
             findings.append(("record", path, 0, "not a review summary (template templates/repo-README.md), "
-                             f"rows missing: {', '.join(missing)}", False))
+                             f"rows missing: {', '.join(missing)}".replace("\u00fc", "ue"), False))
         if text.count("\n") > RECORD_MAX_LINES:
             findings.append(("record", path, 0, f"not a review summary: longer than {RECORD_MAX_LINES} lines "
                              "(details belong in private/records/<name>/)", False))
@@ -505,6 +506,11 @@ def staged_blobs(root: Path):
     return blobs
 
 
+def in_repos(path: str) -> bool:
+    """True for repos itself and everything below it."""
+    return path == "repos" or path.startswith("repos/")
+
+
 def index_gitlinks(root: Path):
     """Paths of the index that are embedded repositories (mode 160000)."""
     links = []
@@ -554,7 +560,7 @@ def check_tree(root: Path, ctx: Context, staged: bool = False):
     for f in tracked_private:
         findings.append(("embargo", f, 0, "file under private/ is tracked (git rm --cached)", False))
     for f in index_gitlinks(root):
-        if f.startswith("repos/"):
+        if in_repos(f):
             findings.append(("record", f, 0, RECORD_GITLINK, False))
     ignored = [f for f in git(root, "ls-files", "-ci", "--exclude-standard", "-z").split("\0")
                if f and (staged or (root / f).exists()) and not f.startswith("private/")]
@@ -651,7 +657,7 @@ def check_revs(root: Path, revs: list):
             if f.startswith("private/"):
                 local.append(("embargo", f, 0, "file under private/ is tracked (git rm --cached)", False))
         for f in rev_gitlinks(root, commit):
-            if f.startswith("repos/"):
+            if in_repos(f):
                 local.append(("record", f, 0, RECORD_GITLINK, False))
         gitignores = {f: reader(f) for f in files if f.rsplit("/", 1)[-1] == ".gitignore"}
         for f in ignored_by_commit_rules(files, gitignores):
@@ -678,7 +684,7 @@ def check_history(root: Path, ctx: Context):
                 blobs.setdefault((parts[2], path), c[:7])
                 if path.startswith("private/"):
                     findings.append(("embargo", f"{c[:7]}:{path}", 0, "file under private/ in history", False))
-            elif len(parts) == 3 and parts[1] == "commit" and path.startswith("repos/"):
+            elif len(parts) == 3 and parts[1] == "commit" and in_repos(path):
                 findings.append(("record", f"{c[:7]}:{path}", 0, RECORD_GITLINK, False))
     # keyed on (blob, path): the same content under another path is checked again, because
     # language, embargo and exemptions depend on the path
@@ -871,6 +877,7 @@ def self_test() -> int:
                           ("repos/a/README_de.md", summary),
                           ("repos/a/README.md", summary.replace(b"| x |", b"|  |")),
                           ("repos/a/README.md", b"```\n" + summary + b"```\n"),
+                          ("repos/a/README.md", b"<!--\n" + summary + b"-->\n"),
                           ("repos/a/README.md", summary + b"audit detail\n" * 80)):
             findings = []
             scan_content(rel, body, ctx, findings)
@@ -889,6 +896,10 @@ def self_test() -> int:
             _, _, f = check_history(lroot, Context(lroot))
             expect("record fires on a gitlink in history", any(x[0] == "record" and "repos/klon" in x[1] for x in f))
             git(lroot, "update-index", "--force-remove", "repos/klon")
+            git(lroot, "update-index", "--add", "--cacheinfo", f"160000,{'1' * 40},repos")
+            _, f = check_tree(lroot, Context(lroot), staged=True)
+            expect("record fires on a gitlink named repos", any(x[0] == "record" and x[1] == "repos" for x in f))
+            git(lroot, "update-index", "--force-remove", "repos")
             git(lroot, "update-index", "--add", "--cacheinfo", f"160000,{'1' * 40},vendor/lib")
             _, f = check_tree(lroot, Context(lroot), staged=True)
             expect("record silent on a gitlink elsewhere", not any(x[0] == "record" for x in f))

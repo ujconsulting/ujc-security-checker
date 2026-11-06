@@ -135,9 +135,9 @@ disclosures/             the checker's own only: inbox, own repositories, own fi
 private/                 local, operation-specific details (gitignored): infra.md, egress.conf,
                          environment.conf, context/, disclosures/, templates/,
                          records/<name>/{reviews,disclosures}/ (upstream audits, rounds, research,
-                         drafts, registers, policy evidence, reports; confidential approvals/checks),
+                         drafts, registers, policy evidence, reports),
                          ledger/ (own private git repository: reviews, runs, findings, salt),
-                         repos/<name>/ (own version: README-own-version.md, reviews/ with patch
+                         repos/<name>/ (disclosures/ with confidential approvals/checks; own version: README-own-version.md, reviews/ with patch
                          rounds, final tests, rechecks, container tests of the copy,
                          implementation/CHANGELOG.md, usage-analysis.md, notes.md, critical
                          disclosure drafts)

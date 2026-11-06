@@ -835,7 +835,7 @@ def self_test() -> int:
             srv.server_close()
             check("redirect not followed", rc == 1 and hits == ["/api/ingest/security"])
 
-            for host in ("10.1.2.3", "172.16.0.5", "172.31.255.1", "192.168.20.35", "127.0.0.1", "[::1]",
+            for host in ("10.1.2.3", "172.16.0.5", "172.31.255.1", "192.168.1.10", "127.0.0.1", "[::1]",
                          "[fd12:3456::1]", "dash", "dash.lan", "agentdash.local", "x.internal", "box.home.arpa"):
                 check(f"http allowed: {host}", check_url(f"http://{host}:8001/api/ingest/security") is not None)
             for host in ("dash.example", "8.8.8.8", "169.254.1.1", "100.64.0.1", "0.0.0.1", "198.18.0.1",

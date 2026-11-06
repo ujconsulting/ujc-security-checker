@@ -187,7 +187,7 @@ rm -f /root/ujc-sandbox-<VMID>-*                    # pickup leftovers on the ho
 ```
 
 Afterwards: fetch the results from the host (over the same connection, SFTP), delete the pickup
-leftovers, record the finding as a round in `private/records/<name>/reviews/` (host, VMID, template,
+leftovers, record the finding as a round in `private/records/<name>/reviews/` (upstream state) or `private/repos/<name>/reviews/` (own version) (host, VMID, template,
 snapshot names, exit codes, negative tests). Whether a sandbox CT is noted in the operation's infrastructure documentation is
 decided by the owner (`private/infra.md`).
 

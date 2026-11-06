@@ -127,6 +127,8 @@ def report(findings) -> int:
         shown = "<redacted>" if kind == "credentials" else match
         out(f"{level}: line {nr}: {kind}: {shown}")
     out(f"leak_scan: {len(errors)} errors, {len(findings) - len(errors)} warnings")
+    if any(f[1] == "AI hint" for f in errors):
+        out('Note: a term that legitimately belongs in the text goes into the draft field "leak_allow" (list of terms).')
     return 1 if errors else 0
 
 

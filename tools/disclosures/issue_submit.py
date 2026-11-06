@@ -63,7 +63,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _submit import (already_submitted_exit, approval_or_abort, leak_check,  # noqa: E402
+from _submit import (already_submitted_exit, approval_note, approval_or_abort, leak_check,  # noqa: E402
                      policy_or_abort, prepare, register_entry, sending, show)
 from _common import (REACTIONS_LOG, AlreadySubmitted, DisclosureError, PolicyError,  # noqa: E402
                      err, load_watch_config, now_iso, out, read_draft, sha256_bytes)
@@ -95,6 +95,7 @@ def reaction(draft: Path, submit: bool) -> int:
         out("ERROR: leak scan - do not submit")
         return 1
     if not submit:
+        approval_note(meta, raw, "reaction")
         out("DRY RUN: nothing sent. Submit only with approval (action=reaction) + --submit.")
         return 0
     approval_or_abort(meta, raw, "reaction")
@@ -163,6 +164,7 @@ def main(argv=None) -> int:
             return 1
         policy_or_abort(meta, text)
         if not a.submit:
+            approval_note(meta, raw, channel)
             out("DRY RUN: nothing sent. Submit only with approval + --submit.")
             return 0
         approval_or_abort(meta, raw, channel)

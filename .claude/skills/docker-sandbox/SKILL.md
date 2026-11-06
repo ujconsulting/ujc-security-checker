@@ -132,5 +132,5 @@ named in the report as "not checked in a run".
    and no UJC lock explains it (`tools/README.md`, "Evaluation").
 7. Container gone (`docker ps -a --filter label=ujc.sandbox=1` shows only the proxy), delete the
    work directory.
-8. Result as round `container-test` or `behavior-probe` in `private/records/<name>/reviews/` (with image
+8. Result as round `container-test` or `behavior-probe` in `private/records/<name>/reviews/` (upstream state) or `private/repos/<name>/reviews/` (own version) (with image
    digest, revision, exit codes, egress evaluation).

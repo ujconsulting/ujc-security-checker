@@ -1,4 +1,4 @@
-<!-- source: SKILL.md sha256:0b62c241a71a111e63b0136160fe03d9ab9ed2ddaff034ed786767c9297612ec -->
+<!-- source: SKILL.md sha256:44c8ecbc9f511f6e4b3085b307d59b979c5f620616a2b45727b06f062dd5afc3 -->
 [English](README.md) | [Deutsch](README_de.md)
 
 # docker-sandbox
@@ -28,7 +28,7 @@ this tool and revision.
 4. `network.txt` must contain `network_disconnected`, otherwise the run does not count.
 5. Read `egress.log` / `egress.log.blocked` - every blocked attempt is a finding.
 6. Evaluate against an upstream comparison run; record the result as a round in
-   `private/records/<name>/reviews/`.
+   `private/records/<name>/reviews/` (upstream state) or `private/repos/<name>/reviews/` (own version).
 
 The mandatory network rule: never the default bridge network or `--network host`; installation
 only in `ujc-sandbox-net` via `ujc-sandbox-proxy:3128` after the egress check, then disconnect the

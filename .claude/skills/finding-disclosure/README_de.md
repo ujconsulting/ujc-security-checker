@@ -1,4 +1,4 @@
-<!-- source: README.md sha256:88c4703db2b01e543f22433749de622de0ef08866f07b0ffb51142254786d3f2 -->
+<!-- source: README.md sha256:21f61205cf2c5eccde6bc157d87e4df40709fc0a0c25c17db7924f8ddb30d547 -->
 [English](README.md) | [Deutsch](README_de.md)
 
 # finding-disclosure
@@ -10,9 +10,9 @@ Kurze Doku für Menschen. Die Agenten laden [`SKILL.md`](SKILL.md) (englisch), d
 Meldet Befunde aus einer Werkzeugprüfung an das Upstream-Projekt und verfolgt alles, was danach
 kommt: Antworten, verknüpfte PRs, Advisories, Mails, Fristen - dazu den Eingang des eigenen
 öffentlichen Repositorys und das Sicherheitspostfach. Nichts verlässt den Rechner ohne eine an den
-Hash gebundene Einmal-Freigabe genau dieses Texts. Alles zu einem geprüften Repository (Register, Freigaben, Codex-Nachweise,
-Berichte, Antwortentwürfe) liegt bei seinem lokalen Record (`private/records/<name>/disclosures/`); das `disclosures/` in der
-Wurzel enthält nur das des Checkers selbst.
+Hash gebundene Einmal-Freigabe genau dieses Texts. Alles zu einem geprüften Repository bleibt lokal: Register, Berichte und nicht-kritische Entwürfe in
+`private/records/<name>/disclosures/`; Freigaben, Codex-Nachweise, Antwortentwürfe und kritische Entwürfe in
+`private/repos/<name>/disclosures/`. Das `disclosures/` in der Wurzel enthält nur das des Checkers selbst.
 
 ## Wann
 

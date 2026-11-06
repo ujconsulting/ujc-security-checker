@@ -5,7 +5,7 @@ Location: private/repos/<name>/implementation/CHANGELOG.md (private, gitignored;
 Sources: `git -C <fork> log --format='%h %ad %s' --date=short <upstream-tag>..HEAD`,
 fork `UJC-PATCHES.md` (section per round) and the review round that triggered the commit.
 Only what the commit really contains; evidence stated honestly (static / container / unverified).
-The local fork path does not go here (public file); it belongs in
+The local fork path does not go here; it belongs in
 private/disclosures/watch_config.local.json -> repos.<owner/repo>.fork_path.
 Patches for findings under embargo: neutral wording of what the code change does, no reference
 to a finding, a disclosure or an embargo until the disclosure is published.

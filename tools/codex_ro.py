@@ -125,8 +125,11 @@ WHAT 2.6.0 CHANGED (2026-09-30, plan docs/plans/2026-09-23-codex-heben-wrapper-2
       never appears with `--json` (0 of ~90 real runs), so the old success half
       was dead and one refusal alone meant exit 3. Execution is now counted
       from `command_execution` events of the last turn, the stream must end in
-      `turn.completed`, and both files are read line by line under a size cap
-      (see blind_run()).
+      `turn.completed`, and both files are read line by line under a size cap.
+      Since 2.7.1 an attempt is not a success: what keeps a round valid is a
+      command with `exit_code` 0; with none, a start failure, a denial, a Codex
+      router error record in stderr, an unclassifiable command or incomplete
+      evidence is exit 3 (the three cases: blind_run()).
     - The CLI version is probed once and shown in the header. A model with a
       known minimum (MODEL_MIN_CLI) is refused before the run when the version
       is lower or unreadable: `gpt-6-sol` on 0.149.1 is HTTP 400 on every call.
@@ -175,11 +178,23 @@ Exit codes:
          output another run holds a lock on, a `.codex/config.toml` in the
          working directory or above it, or a model the installed CLI is known
          not to support (or whose CLI version cannot be read)
-    3    blind: nothing provably ran (no command in the event stream's last
-         turn) AND either a sandbox refusal was logged or the evidence itself
-         is unusable (missing, truncated, malformed, over the size cap). Looks
-         healthy from outside -- exit 0, a thread_id, a full answer file -- and
-         is not a review
+    3    blind: no command SUCCEEDED in the event stream's last turn, and
+         either nothing ran and a sandbox refusal was logged or the evidence
+         is unusable (missing, truncated, malformed, over the size cap), or
+         (2.7.1) commands were attempted and one failed to start or was
+         denied access (exit_code -1, CreateProcessAsUserW, "Access ... is
+         denied", ...), a Codex router execution-error record is in stderr,
+         a command cannot be classified, or the evidence is incomplete. Only
+         ordinary failures (a search with
+         no hit) stay a review, with a warning. Looks healthy from outside --
+         exit 0, a thread_id, a full answer file -- and is not a review
+    4    unsafe (2.7.0): Codex's session rollout shows that THIS turn ran with a
+         sandbox other than read-only, a writable permission profile, an approval
+         policy other than `never`, or two permission fields that disagree. The
+         answer is not a review and the reviewer may have written files. Wins
+         over 0, 1 and 3; on a timeout 124 stays and the unsafe line is printed.
+         Measured format: codex-cli 0.162.1, 2026-10-30. A rollout that cannot
+         be read or bound only warns (`#   applied: unbound (...)`).
     124  timeout -- treat as a failure, do not blindly retry
     127  codex executable not found
     else Codex's own exit code
@@ -203,7 +218,7 @@ import threading
 import time
 from pathlib import Path
 
-WRAPPER_VERSION = "2.6.1"
+WRAPPER_VERSION = "2.7.2"
 
 # gpt-5.6-terra was superseded by gpt-6-sol (released 2026-09-22); gpt-6-sol was
 # in turn superseded by gpt-6.1-sol (2026-10-10/11, measured on codex-cli 0.162.1:
@@ -377,6 +392,9 @@ EXIT_REFUSED = 2
 # code because it is not an error of the caller (2) and not an empty answer (1):
 # it is a full answer that must not be recorded as a review.
 EXIT_BLIND = 3
+# The rollout shows that this turn ran with anything but a read-only sandbox, a
+# read-only permission profile and approval `never` (2.7.0, T22). Overrides 0, 1 and 3.
+EXIT_UNSAFE_SANDBOX = 4
 EXIT_TIMEOUT = 124
 EXIT_NO_CODEX = 127
 
@@ -1468,6 +1486,32 @@ SANDBOX_REFUSAL_RE = re.compile(
 
 EXECUTED_STATUSES = ("completed", "failed")
 
+# 2.7.1: a command that was attempted but could not start, or could not read. Measured
+# 2026-11-02 (codex-cli 0.162.1, tests/fixtures/codex-0.162/blind-failed-commands/): the
+# Store alias of pwsh fails with `CreateProcessAsUserW failed: 5` (exit_code -1), reads from
+# a network share fail with `Access to the path '...' is denied.` and `[Errno 13] Permission
+# denied` (exit_code 1). The other alternatives are the documented variants of the same two
+# failures. The .NET messages are matched by their fixed prefix ("Access to the path",
+# "Zugriff auf den Pfad"), so no gap over the path is needed and a path of any length cannot
+# push the end out of reach (post-build inspection, finding 1). Every alternative is a
+# literal: the search is linear. This is a heuristic on command OUTPUT: a command that merely
+# prints such text (a grep hit, a quoted log) matches too. That errs only towards exit 3 --
+# and only when no command of the turn succeeded.
+_ACCESS_FAILURE = (
+    r"CreateProcessAsUserW failed|Access to the path |Permission denied|Access is denied"
+    r"|Zugriff verweigert|Zugriff auf den Pfad |Operation not permitted"
+    r"|UnauthorizedAccessException"
+)
+ACCESS_FAILURE_RE = re.compile(_ACCESS_FAILURE, re.IGNORECASE)
+_ACCESS_FAILURE_B = re.compile(_ACCESS_FAILURE.encode("ascii"), re.IGNORECASE)
+# Only a Codex tool-router execution-error record counts as stderr evidence for the 2.7.1
+# conditions: the LINE must start with the record header (timestamp, ERROR, the router
+# target, `error=exec_command failed`). A helper warning that quotes "Access is denied" --
+# or quotes a whole router record after its own prefix -- does not (inspection, finding 2).
+# Measured header: `2026-11-02T15:35:36.115295Z ERROR codex_core::tools::router: error=exec_command failed`.
+ROUTER_EXEC_ERROR_RE = re.compile(
+    rb"\d{4}-\d{2}-\d{2}T[0-9:.]+Z +ERROR +codex_core::tools::router: +error=exec_command failed")
+
 
 class StreamEvidence:
     """What the event stream proves about the run -- see read_stream_evidence()."""
@@ -1475,7 +1519,9 @@ class StreamEvidence:
     def __init__(self) -> None:
         """Nothing proven yet: every flag starts at its fail-closed value."""
         self.thread_id: str | None = None
-        self.executed = 0          # command_execution items that provably ran, last turn
+        self.executed = 0          # command_execution items that reported back, last turn
+        self.succeeded = 0         # ... of those with exit_code 0 (2.7.1)
+        self.failed_start_or_denied = 0  # ... failed to start (-1) or were denied (2.7.1)
         self.unclassified = 0      # command_execution items that could not be classified
         self.saw_thread = False
         self.saw_turn = False
@@ -1537,9 +1583,13 @@ def read_stream_evidence(stream_file: Path, limit: int | None = None) -> StreamE
 
     Counted as EXECUTED: `item.completed` whose item is a `command_execution`
     with an integer `exit_code` (`type(v) is int` -- JSON true is not a process)
-    and status `completed` or `failed`. A non-zero exit still ran: the sandbox let
-    the process start. Only the LAST turn counts (resume safety); a
-    `command_execution` that does not fit is `unclassified`, never executed.
+    and status `completed` or `failed`. EXECUTED means "attempted and reported
+    back", not "the reviewer read something": 2.7.1 splits it into SUCCEEDED
+    (exit_code 0) and FAILED_START_OR_DENIED (exit_code -1, or a string
+    `aggregated_output` matching ACCESS_FAILURE_RE, searched whole). Only the LAST
+    turn counts (resume safety); a `command_execution` that does not fit -- or a
+    failed one whose output is neither a string nor null -- is `unclassified`,
+    never executed.
     Every other item type is ignored -- model text in particular can say
     anything. Measured contract (76 of 76 real streams, 0.149.1 and 0.156.0):
     one `thread.started`, one `turn.started`, ending in `turn.completed`.
@@ -1574,6 +1624,8 @@ def read_stream_evidence(stream_file: Path, limit: int | None = None) -> StreamE
                 ev.complete = False
                 ev.turn_failed = False
                 ev.executed = 0
+                ev.succeeded = 0
+                ev.failed_start_or_denied = 0
                 ev.unclassified = 0
             elif kind == "turn.completed":
                 if not ev.saw_turn:
@@ -1593,10 +1645,21 @@ def read_stream_evidence(stream_file: Path, limit: int | None = None) -> StreamE
                 item = event.get("item")
                 if isinstance(item, dict) and item.get("type") == "command_execution":
                     code = item.get("exit_code")
-                    if type(code) is int and item.get("status") in EXECUTED_STATUSES:
-                        ev.executed += 1
-                    else:
+                    if type(code) is not int or item.get("status") not in EXECUTED_STATUSES:
                         ev.unclassified += 1
+                    elif code == 0:
+                        ev.executed += 1
+                        ev.succeeded += 1
+                    else:
+                        output = item.get("aggregated_output")
+                        if output is None:
+                            output = ""
+                        if not isinstance(output, str):
+                            ev.unclassified += 1
+                            continue
+                        ev.executed += 1
+                        if code == -1 or ACCESS_FAILURE_RE.search(output):
+                            ev.failed_start_or_denied += 1
     except OSError:
         ev.missing = True
     return ev
@@ -1624,6 +1687,53 @@ def count_stderr_refusals(err_file: Path, limit: int | None = None) -> tuple[int
     return refusals, True
 
 
+def count_stderr_exec_errors(err_file: Path, limit: int | None = None) -> tuple[int, int, int]:
+    """(records with an access/start-failure signature, records with a sandbox-refusal
+    signature, matching records) among the Codex tool-router execution-error records in
+    stderr (2.7.1).
+
+    A line counts only if it STARTS with a router record header (ROUTER_EXEC_ERROR_RE,
+    re.match after leading whitespace) and matches ACCESS_FAILURE_RE and/or
+    SANDBOX_REFUSAL_RE. Measured: a refused or unstartable command is logged there and may
+    be absent from the stream. The signature flags are independent -- one record can carry
+    both and then selects both remedies -- while the third value counts each record once.
+    Same bounded reader as count_stderr_refusals(); whether stderr was read whole is
+    reported by that function.
+    """
+    limit = EVIDENCE_LIMIT if limit is None else limit
+    if not err_file.exists():
+        return 0, 0, 0
+    access = refused = records = 0
+    try:
+        for raw, over in _bounded_lines(err_file, limit):
+            if over:
+                break
+            if not ROUTER_EXEC_ERROR_RE.match(raw.lstrip()):
+                continue
+            # The two flags are independent: one record can carry both signatures, and
+            # each selects its own remedy (reinspection, finding 1). The record itself
+            # is counted once, in `records`.
+            is_access = bool(_ACCESS_FAILURE_B.search(raw))
+            is_refusal = bool(SANDBOX_REFUSAL_RE.search(raw))
+            access += is_access
+            refused += is_refusal
+            records += is_access or is_refusal
+    except OSError:
+        pass
+    return access, refused, records
+
+
+def _environment_hint() -> str:
+    """The two measured causes of a run whose commands could not start or read (2.7.1)."""
+    return (
+        "  Measured causes (docs/betrieb.md section 2b): on Windows Codex started the Store\n"
+        "  alias of pwsh (%LOCALAPPDATA%\\Microsoft\\WindowsApps\\pwsh.exe), which the\n"
+        "  restricted token cannot launch -- install PowerShell 7 as MSI; or the repository\n"
+        "  sits on a network share the sandbox cannot read -- review from a local copy made\n"
+        "  by scripts/review_mirror.py.\n"
+    )
+
+
 def blind_run(err_file: Path, stream_file: Path, evidence: StreamEvidence | None = None) -> str | None:
     """Reason why this run must not count as a review, or None.
 
@@ -1632,19 +1742,33 @@ def blind_run(err_file: Path, stream_file: Path, evidence: StreamEvidence | None
     the prompt alone, by a model that never opened a file. Nothing else here
     notices, and a verdict from a reviewer that reviewed nothing gets recorded.
 
-    Blind = NOTHING provably ran in the last turn AND (a sandbox refusal was
-    logged, OR the evidence is unusable, OR a command could not be classified).
+    The rule (2.7.1), in three cases:
+      - ACCEPTED: at least one command succeeded (`exit_code` 0) -- incomplete
+        evidence then only warns; or nothing was attempted, nothing refused and
+        the evidence is complete.
+      - ACCEPTED WITH A WARNING: commands were attempted, none succeeded, every
+        one failed in an ordinary way (a search without a hit), evidence complete.
+      - BLIND (exit 3): no command succeeded and any of: nothing ran and a sandbox
+        refusal is in stderr (the original rule, any line); a command failed to start
+        or was denied (A, stream); a Codex router execution-error record names a
+        start failure, denial or refusal (B, stderr, also with nothing in the
+        stream); the evidence is incomplete (C: stream unusable, stderr not read
+        whole, an unclassifiable command).
     Not "any refusal": a model that reaches for one illegal command, is told no,
     and then does the job has produced a real review -- blocking that would make
     the wrapper block normal work, and such a control gets switched off. And not
     "no command": 12 of 72 real runs answered legitimately with none (resume
     rounds, exposure passes with the content in the prompt). Execution that
     happened only in a sub-agent is invisible here and, with a refusal, reads as
-    blind -- a false alarm in the safe direction, documented as such.
+    blind -- a false alarm in the safe direction, documented as such. A success is
+    a heuristic, not proof that files were read: a successful `git rev-parse`
+    counts even if every read failed. Measured 2026-11-02: four plan reviews whose
+    every command failed to start or was denied had ended with exit 0.
     """
     ev = evidence if evidence is not None else read_stream_evidence(stream_file)
     refusals, stderr_whole = count_stderr_refusals(err_file)
-    if ev.executed > 0:
+    access_records, refusal_records, records = count_stderr_exec_errors(err_file)
+    if ev.succeeded > 0:
         if not ev.usable or not stderr_whole or ev.unclassified:
             problem = (ev.problem() or ("stderr exceeds the size limit" if not stderr_whole else
                        f"{ev.unclassified} command event(s) that cannot be classified"))
@@ -1653,9 +1777,19 @@ def blind_run(err_file: Path, stream_file: Path, evidence: StreamEvidence | None
                 f"-- read {stream_file} before relying on the answer."
             )
         return None
+
+    # No command succeeded. Collect EVERY predicate that fires (inspection, finding 3),
+    # then pick the hints from the signatures that matched.
+    nothing_ran = ev.executed == 0
     reasons = []
-    if refusals:
+    legacy_refusal = nothing_ran and refusals > 0
+    if legacy_refusal:
         reasons.append(f"{refusals} refused (stderr)")
+    if ev.failed_start_or_denied:
+        reasons.append(f"{ev.failed_start_or_denied} of {ev.executed} command(s) failed to "
+                       f"start or were denied (stream)")
+    if records:
+        reasons.append(f"{records} execution-error record(s) (stderr)")
     if not ev.usable:
         reasons.append(ev.problem())
     if not stderr_whole:
@@ -1663,27 +1797,404 @@ def blind_run(err_file: Path, stream_file: Path, evidence: StreamEvidence | None
     if ev.unclassified:
         reasons.append(f"{ev.unclassified} command event(s) that cannot be classified")
     if not reasons:
+        if not nothing_ran:
+            warn(
+                f"no command succeeded ({ev.executed} command(s) reported back, all failed in "
+                f"an ordinary way, e.g. a search without a hit). The round stands, but read "
+                f"{stream_file} before relying on it."
+            )
         return None
-    hinweis = (
-        f"  On Windows a refusal is usually openai/codex#42172: without `[windows] "
-        f"sandbox` no backend is selected and every command is refused. This "
-        f"wrapper pins `windows.sandbox=\"{WINDOWS_SANDBOX}\"` -- if you see this "
-        f"anyway, the Codex build no longer accepts it.\n"
-        if os.name == "nt" and refusals else
-        "  A refusal here means the sandbox would not start any process -- check "
-        "the platform's sandbox helper (Landlock on Linux, seatbelt on macOS).\n"
-        if refusals else
-        "  Without usable evidence a run that read nothing cannot be told apart "
-        "from one that did.\n"
-    )
+
+    hints = ""
+    if legacy_refusal or refusal_records:
+        hints += (
+            f"  On Windows a refusal is usually openai/codex#42172: without `[windows] "
+            f"sandbox` no backend is selected and every command is refused. This "
+            f"wrapper pins `windows.sandbox=\"{WINDOWS_SANDBOX}\"` -- if you see this "
+            f"anyway, the Codex build no longer accepts it.\n"
+            if os.name == "nt" else
+            "  A refusal here means the sandbox would not start any process -- check "
+            "the platform's sandbox helper (Landlock on Linux, seatbelt on macOS).\n"
+        )
+    if ev.failed_start_or_denied or access_records:
+        hints += _environment_hint()
+    if not hints:
+        hints = ("  Without a successful command and with incomplete evidence, a run that "
+                 "read nothing cannot be told apart from one that did.\n")
     return (
-        # A refused command never appears in the stream (J0, 0.149.1 and 0.156.0),
-        # so the stream count is 0 by construction -- stated, not implied (J5).
-        f"the reviewer did not provably run a single command ({'; '.join(reasons)}; "
-        f"0 refused (stream); 0 executed (stream)) -- the answer may have been written WITHOUT reading "
-        f"anything, and it is not a review.\n" + hinweis
+        # A refused command never appears in the stream (J0, 0.149.1 and 0.156.0), so a
+        # refusal-only run shows 0 in the stream -- stated, not implied (J5).
+        f"the reviewer did not run a single command successfully ({'; '.join(reasons)}; "
+        f"0 refused (stream); {ev.executed} executed (stream), 0 succeeded) -- the answer "
+        f"may have been written WITHOUT reading anything, and it is not a review.\n" + hints
         + f"  Details: {err_file} and {stream_file}"
     )
+
+
+# --- what Codex APPLIED to this turn (2.7.0, T22, upstream #38) ---------------------
+#
+# The argv above asks for read-only; nothing so far confirmed what the client applied.
+# Codex writes it into its session rollout -- measured on codex-cli 0.162.1
+# (2026-10-30): `$CODEX_HOME/sessions/YYYY/MM/DD/rollout-<ts>-<thread>.jsonl`, per turn
+# `event_msg task_started {turn_id}`, `turn_context {turn_id, model, effort,
+# sandbox_policy, approval_policy, permission_profile, ...}`, then the user message
+# (`response_item`, role user) whose text is byte-identical to the prompt we sent and
+# which carries its turn id twice (`metadata.retained_source.id.turn_id`,
+# `payload.internal_chat_message_metadata_passthrough.turn_id`). Undocumented: an
+# unreadable or unbindable rollout only WARNS (argv still enforces read-only, as in
+# 2.6.1); a readable rollout that shows anything but read-only STOPS the run (exit 4).
+# The wrapper's own --json stream carries no turn id, so the binding is a random
+# marker line the wrapper appends to the prompt, joined to the context by the marked
+# message's own turn id -- never by file order (review rounds 1-3 of the T22 plan).
+
+ROLLOUT_TAIL_CAP = 16 * 1024 * 1024
+MARKER_PREFIX = "<!-- claudex-invocation: "
+MARKER_LINE_RE = re.compile(r"<!-- claudex-invocation: [0-9a-f]{32} -->")
+_SEVERITY = {"confirmed": 0, "unknown": 1, "unsafe": 2}
+
+
+def new_marker() -> str:
+    """One fresh invocation marker line (no newline). 128 random bits."""
+    import secrets
+    return f"{MARKER_PREFIX}{secrets.token_hex(16)} -->"
+
+
+def with_marker(prompt: str, marker: str) -> str:
+    """The prompt as transmitted: the caller's text, then the marker as its own last line."""
+    return prompt + ("" if prompt.endswith("\n") else "\n") + marker + "\n"
+
+
+class Applied:
+    """The settings Codex applied to the bound turn, and the verdict on them.
+
+    verdict: "confirmed" (all three permission fields present and read-only),
+    "unsafe" (any of them positively not read-only, or the two permission
+    representations disagree), "unknown" (a field missing or of unknown shape,
+    nothing unsafe), "unbound" (the turn could not be bound; `reason` says why).
+    """
+
+    def __init__(self, verdict: str, reason: str = "", **fields):
+        self.verdict = verdict
+        self.reason = reason
+        self.model = fields.get("model")
+        self.effort = fields.get("effort")
+        self.sandbox = fields.get("sandbox")
+        self.profile = fields.get("profile")
+        self.approval = fields.get("approval")
+
+    def line(self) -> str:
+        if self.verdict == "unbound":
+            return f"#   applied: unbound ({self.reason})"
+        label = {"confirmed": "confirmed", "unsafe": "UNSAFE", "unknown": "unknown"}[self.verdict]
+        def show(v):
+            return _escape_path_for_message(str(v))[:60] if v is not None else "?"
+        return (f"#   applied: model={show(self.model)} effort={show(self.effort)} "
+                f"sandbox={show(self.sandbox)} profile={show(self.profile)} "
+                f"approval={show(self.approval)} [{label}]")
+
+
+def _rollout_files(thread_id: str) -> list[Path]:
+    """Rollout files of one thread. `thread_id` must already match THREAD_ID_RE."""
+    base = _codex_home() / "sessions"
+    try:
+        return sorted(base.glob(f"*/*/*/rollout-*-{thread_id}.jsonl"))
+    except OSError:
+        return []
+
+
+def _file_identity(st: os.stat_result) -> tuple:
+    return (st.st_dev, st.st_ino)
+
+
+def rollout_before(thread_id: str | None):
+    """(path, identity, size) of the thread's rollout before the run, or None.
+
+    Only a resume has one; a new exec's rollout is created by the run itself.
+    """
+    if not thread_id or not THREAD_ID_RE.match(thread_id):
+        return None
+    files = _rollout_files(thread_id)
+    if len(files) != 1:
+        return None
+    try:
+        st = os.lstat(files[0])
+    except OSError:
+        return None
+    if not stat.S_ISREG(st.st_mode):
+        return None
+    return (files[0], _file_identity(st), st.st_size)
+
+
+def _profile_state(profile) -> str:
+    """"read", "write" or "unknown" for a turn_context permission_profile."""
+    if isinstance(profile, dict) and profile.get("type") == "disabled":
+        # Measured 2026-10-30 on a real --yolo run: full access is {"type": "disabled"}.
+        return "write"
+    if not isinstance(profile, dict):
+        return "unknown"
+    # Every part is judged on its own and a positively writable part wins over any
+    # missing or malformed one (post-build inspection, finding 1: the first malformed
+    # entry used to return "unknown" before a later write entry was seen).
+    write = unknown = False
+    if profile.get("type") != "managed":
+        unknown = True
+    fs, net = profile.get("file_system"), profile.get("network")
+    if isinstance(net, str):
+        write |= net != "restricted"
+    else:
+        unknown = True
+    entries = None
+    if isinstance(fs, dict):
+        if isinstance(fs.get("type"), str):
+            write |= fs["type"] != "restricted"
+        else:
+            unknown = True
+        entries = fs.get("entries")
+    else:
+        unknown = True
+    if isinstance(entries, list) and entries:
+        for entry in entries:
+            access = entry.get("access") if isinstance(entry, dict) else None
+            if isinstance(access, str):
+                write |= access != "read"
+            else:
+                unknown = True
+    else:
+        unknown = True
+    if write:
+        return "write"
+    return "unknown" if unknown else "read"
+
+
+def judge_context(ctx) -> Applied:
+    """The verdict on one turn_context payload. Each permission field on its own:
+    a malformed model field can never mask a permission verdict."""
+    if not isinstance(ctx, dict):
+        return Applied("unknown")
+    sandbox = ctx.get("sandbox_policy")
+    stype = sandbox.get("type") if isinstance(sandbox, dict) else None
+    stype = stype if isinstance(stype, str) else None
+    profile = _profile_state(ctx.get("permission_profile"))
+    approval = ctx.get("approval_policy") if isinstance(ctx.get("approval_policy"), str) else None
+    unsafe = ((stype is not None and stype != "read-only")
+              or profile == "write"
+              or (approval is not None and approval != "never"))
+    if unsafe:
+        verdict = "unsafe"
+    elif stype == "read-only" and profile == "read" and approval == "never":
+        verdict = "confirmed"
+    else:
+        verdict = "unknown"
+    model = ctx.get("model") if isinstance(ctx.get("model"), str) else None
+    effort = ctx.get("effort") if isinstance(ctx.get("effort"), str) else None
+    return Applied(verdict, model=model, effort=effort, sandbox=stype, profile=profile,
+                   approval=approval)
+
+
+def _message_text(payload: dict) -> str:
+    content = payload.get("content")
+    if isinstance(content, str):
+        return content
+    if not isinstance(content, list):
+        return ""
+    return "".join(c["text"] for c in content
+                   if isinstance(c, dict) and isinstance(c.get("text"), str))
+
+
+def _message_turn_id(event: dict, payload: dict) -> str | None:
+    """The marked message's own turn id; None unless both measured fields agree."""
+    meta = event.get("metadata")
+    source = meta.get("retained_source") if isinstance(meta, dict) else None
+    sid = source.get("id") if isinstance(source, dict) else None
+    a = sid.get("turn_id") if isinstance(sid, dict) else None
+    passthrough = payload.get("internal_chat_message_metadata_passthrough")
+    b = passthrough.get("turn_id") if isinstance(passthrough, dict) else None
+    if isinstance(a, str) and a and a == b:
+        return a
+    return None
+
+
+def _open_rollout(path: Path):
+    """A read handle on a REGULAR rollout file, or None. Never follows a link, never
+    blocks on a FIFO (O_NONBLOCK, then the handle must be a regular file)."""
+    if _is_reparse_point(path):
+        return None, None
+    flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+    try:
+        fd = os.open(path, flags)
+    except OSError:
+        return None, None
+    try:
+        st = os.fstat(fd)
+    except OSError:
+        os.close(fd)
+        return None, None
+    if not stat.S_ISREG(st.st_mode):
+        os.close(fd)
+        return None, None
+    # After the open (post-build inspection, finding 3): Windows has no O_NOFOLLOW, so the
+    # leaf could have been swapped for a link between the check above and the open. The
+    # path must still name exactly the file we hold, and still be no link or reparse point.
+    try:
+        after = os.lstat(path)
+    except OSError:
+        os.close(fd)
+        return None, None
+    if (_is_reparse_point(path) or not stat.S_ISREG(after.st_mode)
+            or _file_identity(after) != _file_identity(st)):
+        os.close(fd)
+        return None, None
+    return fd, st
+
+
+def read_applied(thread_id: str | None, marker: str, before) -> Applied:
+    """Bind this invocation's turn in the rollout and judge what was applied.
+
+    Reads only the region appended since `before` (from rollout_before()), at most
+    ROLLOUT_TAIL_CAP bytes. Only "unsafe" survives an incomplete read; anything else
+    incomplete is "unbound", never "confirmed".
+    """
+    if not thread_id or not THREAD_ID_RE.match(thread_id):
+        return Applied("unbound", "no usable thread id")
+    files = _rollout_files(thread_id)
+    if not files:
+        return Applied("unbound", "no rollout for this thread")
+    if len(files) > 1:
+        return Applied("unbound", "several rollout files for this thread")
+    path = files[0]
+    fd, st = _open_rollout(path)
+    if fd is None:
+        return Applied("unbound", "the rollout is not a readable regular file")
+    start = 0
+    if before is not None:
+        b_path, b_ident, b_size = before
+        if b_path != path or b_ident != _file_identity(st) or st.st_size < b_size:
+            os.close(fd)
+            return Applied("unbound", "the rollout was replaced or truncated during the run")
+        start = b_size
+    contexts: dict[str, Applied] = {}  # turn id -> worst verdict seen for it
+    marked: list[str | None] = []
+    over = False
+    worst_unsafe: Applied | None = None
+    try:
+        with os.fdopen(fd, "rb") as handle:
+            handle.seek(start)
+            consumed = 0
+            while True:
+                raw = handle.readline(ROLLOUT_TAIL_CAP - consumed + 1)
+                if not raw:
+                    break
+                consumed += len(raw)
+                if consumed > ROLLOUT_TAIL_CAP:
+                    over = True
+                    break
+                # No byte prefilter before decoding: a JSON unicode escape spells the same
+                # marker or record type in other bytes, and a prefilter skipped exactly such a
+                # record (closing gate of 2.7.0). Every line is decoded; the cap bounds the cost.
+                try:
+                    event = json.loads(raw)
+                except (ValueError, RecursionError):
+                    # Unparseable lines are skipped; a deeply nested one must not escape as a
+                    # traceback and take the verdict with it (post-build inspection, finding 4).
+                    continue
+                if not isinstance(event, dict):
+                    continue
+                payload = event.get("payload")
+                if not isinstance(payload, dict):
+                    continue
+                if event.get("type") == "turn_context" and isinstance(payload.get("turn_id"), str):
+                    # Keep the WORST context per turn id: a later safe one must never replace
+                    # an earlier unsafe one (post-build inspection, finding 2).
+                    judged = judge_context(payload)
+                    kept = contexts.get(payload["turn_id"])
+                    if kept is None or _SEVERITY[judged.verdict] >= _SEVERITY[kept.verdict]:
+                        contexts[payload["turn_id"]] = judged
+                elif (event.get("type") == "response_item" and payload.get("role") == "user"
+                      and marker in _message_text(payload)):
+                    marked.append(_message_turn_id(event, payload))
+                # Monotonic: an unsafe bound context counts the moment both halves are known.
+                for tid in marked:
+                    if tid is not None and tid in contexts:
+                        verdict = contexts[tid]
+                        if verdict.verdict == "unsafe":
+                            worst_unsafe = worst_unsafe or verdict
+    except OSError:
+        return worst_unsafe or Applied("unbound", "the rollout could not be read")
+    if worst_unsafe is not None:
+        return worst_unsafe
+    if over:
+        return Applied("unbound", f"the rollout tail exceeds {ROLLOUT_TAIL_CAP} bytes")
+    if not marked:
+        return Applied("unbound", "this invocation's marker is not in the rollout")
+    if any(tid is None for tid in marked):
+        return Applied("unbound", "the marked message's turn ids are missing or disagree")
+    verdicts = []
+    for tid in marked:
+        if tid not in contexts:
+            return Applied("unbound", "no turn_context for the marked turn")
+        verdicts.append(contexts[tid])
+    return max(verdicts, key=lambda a: _SEVERITY[a.verdict])
+
+
+def report_applied(applied: Applied, args) -> None:
+    """Print the applied line; warn on anything short of a clean confirmation."""
+    print(applied.line())
+    if applied.verdict == "unsafe":
+        warn("the read-only sandbox was NOT applied to this turn -- the answer is not a review, "
+             "and the reviewer may have written files. Exit 4.")
+    elif applied.verdict == "unbound":
+        warn(f"could not confirm what Codex applied to this turn ({applied.reason}); "
+             f"read-only is still enforced by the arguments, as before 2.7.0.")
+    elif applied.verdict == "unknown":
+        warn("the applied permissions could not be fully read from the rollout "
+             "(a field is missing or has an unknown shape); nothing unsafe was seen.")
+    if applied.verdict != "unbound":
+        if applied.model is not None and applied.model != args.model:
+            warn(f"Codex applied model {_escape_path_for_message(applied.model)[:60]}, "
+                 f"not the requested {args.model}.")
+        if applied.effort is not None and applied.effort != args.effort:
+            warn(f"Codex applied effort {_escape_path_for_message(applied.effort)[:60]}, "
+                 f"not the requested {args.effort}.")
+
+
+LOCK_HOLDER_MAX = 200
+_HOLDER_NOT_SHOWN = "(holder not shown)"
+
+
+def _read_lock_holder(path: Path) -> str:
+    """Text for the "another run holds ..." message; diagnostics only (2.7.2).
+
+    The lock is another run's file, so it is untrusted: it may be a symlink to some
+    secret, a huge file, a FIFO, or a hard link to another file. POSIX: lstat first and
+    open only a regular file with st_nlink == 1, O_NOFOLLOW|O_NONBLOCK, require the same
+    (st_dev, st_ino) as a regular file after fstat, and read at most LOCK_HOLDER_MAX
+    bytes. Windows: never open it (an open() there can be neither bounded nor made
+    reparse-safe with the standard library); the message names the lock path only.
+    Anything else is "(holder not shown)". Never raises.
+    """
+    if os.name == "nt":
+        return "(holder not read on Windows)"
+    nofollow = getattr(os, "O_NOFOLLOW", 0)
+    nonblock = getattr(os, "O_NONBLOCK", 0)
+    if not nofollow or not nonblock:
+        return _HOLDER_NOT_SHOWN
+    try:
+        before = os.lstat(path)
+        if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1:
+            return _HOLDER_NOT_SHOWN
+        fd = os.open(path, os.O_RDONLY | nofollow | nonblock | getattr(os, "O_CLOEXEC", 0))
+    except OSError:
+        return _HOLDER_NOT_SHOWN
+    try:
+        after = os.fstat(fd)
+        if (not stat.S_ISREG(after.st_mode) or after.st_nlink != 1
+                or (after.st_dev, after.st_ino) != (before.st_dev, before.st_ino)):
+            return _HOLDER_NOT_SHOWN
+        return os.read(fd, LOCK_HOLDER_MAX).decode("utf-8", errors="replace")
+    except OSError:
+        return _HOLDER_NOT_SHOWN
+    finally:
+        os.close(fd)
 
 
 def acquire_locks(paths: list[Path]) -> list[Path]:
@@ -1704,10 +2215,7 @@ def acquire_locks(paths: list[Path]) -> list[Path]:
             fd = os.open(path, flags, 0o600)
         except FileExistsError:
             release_locks(taken)
-            try:
-                holder = path.read_text(encoding="utf-8", errors="replace")[:200]
-            except OSError:
-                holder = "(unreadable)"
+            holder = _read_lock_holder(path)
             die(
                 f"another run holds {path}: {_escape_path_for_message(holder.strip())}\n"
                 f"  Refusing: sharing an output would let the two runs overwrite each "
@@ -2006,6 +2514,11 @@ def _run_locked(args, launch, argv_child, cli_version, cwd, repo_root,
         if os.name == "nt"
         else {"start_new_session": True}
     )
+    # 2.7.0: a marker that only THIS invocation's turn can carry, and the rollout's
+    # state before the run (a resume appends to an existing file).
+    marker = new_marker()
+    transmitted = with_marker(prompt, marker)
+    before = rollout_before(args.resume)
     with open_for_write(stream_file, "the event stream") as stream_handle, open_for_write(
         err_file, "--err-file"
     ) as err_handle:
@@ -2023,13 +2536,17 @@ def _run_locked(args, launch, argv_child, cli_version, cwd, repo_root,
             die(f"codex could not be started: {_escape_path_for_message(executable)}: "
                 f"{exc.__class__.__name__}", EXIT_NO_CODEX)
         try:
-            proc.communicate(prompt.encode("utf-8"), timeout=args.timeout)
+            proc.communicate(transmitted.encode("utf-8"), timeout=args.timeout)
         except subprocess.TimeoutExpired:
             kill_tree(proc)
             try:
                 proc.communicate(timeout=15)
             except subprocess.TimeoutExpired:
                 warn("the child did not exit even after the kill.")
+            # Even a timed-out turn may have run unsafely: say so before the 124. The
+            # handle is still open here; flush whatever went through it before reading.
+            stream_handle.flush()
+            report_applied(read_applied(read_stream_evidence(stream_file).thread_id, marker, before), args)
             die(
                 f"timeout after {args.timeout}s -- treat as a failure, do not blindly "
                 f"retry. stderr: {err_file}",
@@ -2045,6 +2562,13 @@ def _run_locked(args, launch, argv_child, cli_version, cwd, repo_root,
     elif evidence.thread_id:
         warn(f"the stream carries a malformed thread id; not printed: "
              f"{_escape_path_for_message(evidence.thread_id[:80])}")
+
+    # 2.7.0, FIRST of all: what did Codex apply to this turn? An unsafe turn is not a
+    # review on any path -- blind, empty, non-zero or apparently fine.
+    applied = read_applied(evidence.thread_id, marker, before)
+    report_applied(applied, args)
+    if applied.verdict == "unsafe":
+        return EXIT_UNSAFE_SANDBOX
 
     # Before anything is reported as an answer: did the reviewer get to read?
     # This check comes FIRST because the run it catches looks entirely healthy --

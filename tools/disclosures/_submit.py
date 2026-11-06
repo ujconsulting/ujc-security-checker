@@ -137,6 +137,8 @@ def leak_check(meta, *texts, block_exploit=False) -> bool:
         out(f"  {level}: line {nr}: {kind}: {shown}")
     errors = [f for f in findings if f[0] == "ERROR"]
     out(f"Leak scan: {len(errors)} errors, {len(findings) - len(errors)} warnings")
+    if any(f[1] == "AI hint" for f in errors):
+        out('  Note: a term that legitimately belongs in the text goes into the draft field "leak_allow" (list of terms).')
     if block_exploit and any(f[1] == EXPLOIT_KIND for f in errors):
         out("  ERROR: critical finding on a public channel: exploit details (PoC, payload, "
             "reverse shell, exploit) must not appear in the text - remove them or use the "
@@ -308,6 +310,12 @@ def codex_check_or_abort(meta, raw) -> None:
                               f"--source quarantine/<name>' first (switch {switch} in .env).")
         if reason == "ok":
             out(f"Codex {label}: ok")
+
+
+def approval_note(meta, raw, action):
+    """Dry run: say whether a valid approval for exactly this text exists. Reads only."""
+    ok, reason = check_approval(meta["id"], raw, action)
+    out("Approval: valid for this text" if ok else f"Approval: none ({reason})")
 
 
 def approval_or_abort(meta, raw, action):

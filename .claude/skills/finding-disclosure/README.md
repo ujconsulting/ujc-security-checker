@@ -10,9 +10,9 @@ Short human documentation. The agents load [`SKILL.md`](SKILL.md), which is auth
 Reports findings from a tool review to the upstream project and tracks everything that follows:
 answers, linked PRs, advisories, mails, deadlines - plus the inbox of our own public repository and
 the security mailbox. Nothing leaves the machine without a hash-bound, one-time approval of
-exactly that text. Everything about a reviewed repository (register, approvals, Codex records,
-reports, reply drafts) lives with its local record (`private/records/<name>/disclosures/`); the root `disclosures/`
-holds only the checker's own.
+exactly that text. Everything about a reviewed repository stays local: register, reports and non-critical drafts in
+`private/records/<name>/disclosures/`; approvals, Codex records, reply drafts and critical drafts in
+`private/repos/<name>/disclosures/`. The root `disclosures/` holds only the checker's own.
 
 ## When to use
 

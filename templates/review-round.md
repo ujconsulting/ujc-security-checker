@@ -8,9 +8,9 @@ rounds of the repository (initial audits, final tests, rechecks, upstream resear
 <kind> e.g. initial-audit-claude, initial-audit-codex, upstream-research, final-test, recheck,
 final-test-scope, container-test. Keep it short: the raw material is in the fork under
 docs/ujc/audit/, here is the summary with the disposition.
-No customer names, no secrets, no exploit details (the file is public).
+No customer names, no secrets, no exploit details, even though the file stays local.
 Findings under embargo (reported confidentially upstream, not yet published) do not appear in
-this public file at all - no placeholder, no counter, no "withheld"; they go entirely to
+this file at all - no placeholder, no counter, no "withheld"; they go entirely to
 private/repos/<name>/ (round notes, notes.md) until the disclosure is published.
 -->
 
